@@ -250,9 +250,11 @@ function serveStatic(req, res, pathname) {
   let rel = pathname === "/" ? "/index.html" : pathname;
   const fp = path.join(PUB, path.normalize(rel).replace(/^(\.\.[\/\\])+/, ""));
   if (!fp.startsWith(PUB) || !fs.existsSync(fp) || fs.statSync(fp).isDirectory()) {
-    // SPA fallback to index.html
-    const idx = path.join(PUB, "index.html");
-    if (fs.existsSync(idx)) { res.writeHead(200, { "Content-Type": MIME[".html"] }); return res.end(fs.readFileSync(idx)); }
+    // SPA fallback to index.html：优先 public/，其次仓库根目录（方便直接把 index.html 拖进 render-backend/ 部署）
+    const idxPub = path.join(PUB, "index.html");
+    const idxRoot = path.join(ROOT, "index.html");
+    const idx = fs.existsSync(idxPub) ? idxPub : (fs.existsSync(idxRoot) ? idxRoot : null);
+    if (idx) { res.writeHead(200, { "Content-Type": MIME[".html"] }); return res.end(fs.readFileSync(idx)); }
     return send(res, 404, { ok: false, msg: "not found" });
   }
   res.writeHead(200, { "Content-Type": MIME[path.extname(fp)] || "application/octet-stream" });
