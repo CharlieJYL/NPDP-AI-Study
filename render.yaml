@@ -6,7 +6,7 @@ services:
     runtime: node
     plan: free                       # 免费档；免费档不活动会休眠，首次访问慢几秒（自动唤醒）
     branch: main                     # 你的 GitHub 默认分支名（也可能是 master）
-    buildCommand: ""                 # 无依赖，无需构建
+    buildCommand: "echo skip-build"   # 无依赖、无构建步骤；用 no-op 显式跳过，避免 Render 默认跑 npm run build 失败
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
