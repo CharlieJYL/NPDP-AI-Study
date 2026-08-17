@@ -1,0 +1,13 @@
+{
+  "name": "study-sync-backend",
+  "version": "1.0.0",
+  "description": "AI 学习看板 · 跨设备进度同步后端（Render 部署版）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}
