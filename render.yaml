@@ -11,9 +11,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATA_DIR                # 进度数据存到这里（持久磁盘挂载点）
-        value: /data
-    disk:
-      name: study-data
-      mountPath: /data
-      sizeGB: 1                      # 1GB 足够存进度；持久磁盘按用量极廉收费（约 0.15 美元/GB/月），为保证进度不丢建议开启
+    # 说明：Render 免费档不允许挂持久磁盘（free tier 不支持 disks），
+    # 因此不配 disk，也不设 DATA_DIR，server.js 会自动回退到本地 ./server_data 文件存储。
+    # 代价：免费档实例休眠/重启后云端副本可能清空，但本地浏览器进度永不丢，
+    # 换设备前在旧设备点一次“同步上传”即可。如需完美持久，升级 Starter 档并加回 disk 块。
