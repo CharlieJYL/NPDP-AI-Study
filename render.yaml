@@ -4,14 +4,17 @@ services:
   - type: web
     name: study-sync-backend
     runtime: node
-    plan: free                       # 免费档；免费档不活动会休眠，首次访问慢几秒（自动唤醒）
+    plan: starter                    # 付费档（免费档不允许挂持久磁盘）；约 $7/月，挂盘后数据永久保存
     branch: main                     # 你的 GitHub 默认分支名（也可能是 master）
     buildCommand: "echo skip-build"   # 无依赖、无构建步骤；用 no-op 显式跳过，避免 Render 默认跑 npm run build 失败
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
-    # 说明：Render 免费档不允许挂持久磁盘（free tier 不支持 disks），
-    # 因此不配 disk，也不设 DATA_DIR，server.js 会自动回退到本地 ./server_data 文件存储。
-    # 代价：免费档实例休眠/重启后云端副本可能清空，但本地浏览器进度永不丢，
-    # 换设备前在旧设备点一次“同步上传”即可。如需完美持久，升级 Starter 档并加回 disk 块。
+    # 持久磁盘挂载到 /data；server.js 第21行检测到 /data 存在后，会自动把账号/登录态/进度
+    # 写到 /data/server_data。该磁盘随服务长期存在，重新部署、实例回收都不会清空，
+    # 彻底根治“账号丢失 + 每次打开都要重新登录”。
+    disks:
+      - name: study-data             # 磁盘名（同一服务内唯一即可）
+        mountPath: /data             # 挂载点，server.js 据此自动切到持久存储
+        sizeGB: 1                    # 最小 1GB，对这个小看板绰绰有余（约 $0.25/月）
