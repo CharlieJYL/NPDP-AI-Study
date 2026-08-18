@@ -4,17 +4,13 @@ services:
   - type: web
     name: study-sync-backend
     runtime: node
-    plan: starter                    # 付费档（免费档不允许挂持久磁盘）；约 $7/月，挂盘后数据永久保存
-    branch: main                     # 你的 GitHub 默认分支名（也可能是 master）
-    buildCommand: "echo skip-build"   # 无依赖、无构建步骤；用 no-op 显式跳过，避免 Render 默认跑 npm run build 失败
+    plan: free                      # 免费档（Hobby $0/月）；免费档不允许挂持久磁盘，故不配 disk
+    branch: main                    # 你的 GitHub 默认分支名（也可能是 master）
+    buildCommand: "echo skip-build" # 无依赖、无构建步骤；用 no-op 显式跳过，避免 Render 默认跑 npm run build 失败
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
-    # 持久磁盘挂载到 /data；server.js 第21行检测到 /data 存在后，会自动把账号/登录态/进度
-    # 写到 /data/server_data。该磁盘随服务长期存在，重新部署、实例回收都不会清空，
-    # 彻底根治“账号丢失 + 每次打开都要重新登录”。
-    disks:
-      - name: study-data             # 磁盘名（同一服务内唯一即可）
-        mountPath: /data             # 挂载点，server.js 据此自动切到持久存储
-        sizeGB: 1                    # 最小 1GB，对这个小看板绰绰有余（约 $0.25/月）
+    # 免费档不支持 disk，故不配 disk/DATA_DIR；server.js 检测不到 /data 时，
+    # 会自动回退到程序目录 ./server_data（临时盘，重部署/实例回收会清空，但前端已用
+    # “记住凭据+自动登录+进度自愈”规避，详见 index.html）。
