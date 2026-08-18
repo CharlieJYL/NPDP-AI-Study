@@ -1123,12 +1123,13 @@ let API_BASE = (function(){ try { return localStorage.getItem("API_BACKEND") || 
 let api = { online:false, user:null };
 // 同源探测：若网页就是由后端（同一个网址）托管的，留空后端地址也能直接同步，无需手动填写
 let SAME_ORIGIN_OK = false;
-(function(){
+// 暴露成可 await 的 promise，供 checkSession 在启动时等探测完成后再判断离线，消除竞态
+const SAME_ORIGIN_PROBE = (function(){
   try {
-    fetch("/api/me", { method:"GET" }).then(r=>{
+    return fetch("/api/me", { method:"GET" }).then(r=>{
       if(r.status === 200 || r.status === 401 || r.status === 403) SAME_ORIGIN_OK = true;
     }).catch(()=>{});
-  } catch(e){}
+  } catch(e){ return Promise.resolve(); }
 })();
 
 async function apiReq(path, method, body){
@@ -1141,13 +1142,27 @@ async function apiReq(path, method, body){
   return { status: r.status, data };
 }
 function applyProgress(p){
-  done = (p && p.done) || {}; mout = (p && p.mout) || {}; mq = (p && p.mq) || {}; qbest = (p && p.qbest) || {};
+  if(!p) return;
+  const _d=(p.done)||{}, _m=(p.mout)||{}, _q=(p.mq)||{}, _b=(p.qbest)||{};
+  const has = Object.keys(_d).length || Object.keys(_m).length || Object.keys(_q).length || Object.keys(_b).length;
+  if(!has){ // 服务器无进度（被清空/新账号）：保留本机进度并推回服务器，避免本地记录因服务端清空而丢失
+    if(api && api.online) syncProgress();
+    return;
+  }
+  // 并集合并：服务器与本机取并集（任一侧为 true/有值即保留），最大化不丢数据
+  done  = Object.assign({}, done, _d);
+  mout  = Object.assign({}, mout, _m);
+  mq    = Object.assign({}, mq, _q);
+  qbest = Object.assign({}, qbest, _b);
   try { localStorage.setItem(KEY_DONE, JSON.stringify(done)); localStorage.setItem(KEY_OUT, JSON.stringify(mout));
         localStorage.setItem(KEY_MQ, JSON.stringify(mq)); localStorage.setItem(KEY_QBEST, JSON.stringify(qbest)); } catch(e){}
 }
 async function checkSession(){
+  // 等同源探测完成再判断，避免启动时序竞态（探测未返回时 SAME_ORIGIN_OK 还是 false，
+  // 会误判为离线模式而跳过自动登录）
+  try { await SAME_ORIGIN_PROBE; } catch(e){}
   if(!API_BASE && !SAME_ORIGIN_OK){
-    // 离线模式（无后端）：不尝试自动登录，直接用本机 localStorage
+    // 离线模式（既没填后端地址、也无法同源）：不尝试自动登录，直接用本机 localStorage
     renderAuthBar(); populateBackendInput(); return;
   }
   const ok = await autoLogin();
