@@ -456,6 +456,7 @@
       <button class="btn ghost" onclick="hideModal('loginModal')">取消</button></div>
     <div class="mlink"><a onclick="hideModal('loginModal');showModal('regModal')">没有账号？去注册</a>
       · <a onclick="hideModal('loginModal');showModal('forgotModal')">忘记密码？</a></div>
+    <div class="mtip">本设备会记住你的账号密码（仅存于本机浏览器），下次打开自动登录，无需手动输入。</div>
   </div>
 </div>
 <!-- 注册弹窗 -->
@@ -1145,16 +1146,51 @@ function applyProgress(p){
         localStorage.setItem(KEY_MQ, JSON.stringify(mq)); localStorage.setItem(KEY_QBEST, JSON.stringify(qbest)); } catch(e){}
 }
 async function checkSession(){
+  if(!API_BASE && !SAME_ORIGIN_OK){
+    // 离线模式（无后端）：不尝试自动登录，直接用本机 localStorage
+    renderAuthBar(); populateBackendInput(); return;
+  }
+  const ok = await autoLogin();
+  if(!ok){ api.online = false; api.user = null; }
+  renderAuthBar(); populateBackendInput();
+}
+// 记住凭据 + 自动登录：
+// 1) 启动优先用已有 token；2) token 失效则用记住的用户名密码登录；
+// 3) 若后端因重部署/实例回收清空了账号，则用记住的密保问题自动重建账号并登录。
+// 账号密码明文存于本机浏览器 localStorage（仅本设备可用），用于免除手动登录。
+function storeCreds(username, password, secQ, secA){
+  try {
+    localStorage.setItem("API_USER", username || "");
+    localStorage.setItem("API_PASS", password || "");
+    if(secQ !== undefined) localStorage.setItem("API_SECQ", secQ || "");
+    if(secA !== undefined) localStorage.setItem("API_SECA", secA || "");
+  } catch(e){}
+}
+function applyAuth(d){
+  api.online = true; api.user = { username: d.username, role: d.role };
+  if(d.token){ try { localStorage.setItem("API_TOKEN", d.token); } catch(e){} }
+  apiReq("/api/progress", "GET").then(pr => { if(pr.status === 200) applyProgress(pr.data); });
+}
+async function autoLogin(){
+  // 1) 现有 token 仍有效？
   try {
     const me = await apiReq("/api/me", "GET");
-    if(me.status === 200 && me.data.ok){
-      api.online = true; api.user = { username: me.data.username, role: me.data.role };
-      const pr = await apiReq("/api/progress", "GET");
-      if(pr.status === 200) applyProgress(pr.data);
+    if(me.status === 200 && me.data.ok){ applyAuth(me.data); return true; }
+  } catch(e){}
+  // 2) 有记住的凭据 → 自动登录
+  let u=null,p=null,q=null,a=null;
+  try { u=localStorage.getItem("API_USER"); p=localStorage.getItem("API_PASS"); q=localStorage.getItem("API_SECQ"); a=localStorage.getItem("API_SECA"); } catch(e){}
+  if(u && p){
+    const r = await apiReq("/api/login", "POST", { username:u, password:p });
+    if(r.status === 200 && r.data.ok){ applyAuth(r.data); return true; }
+    const msg = (r.data && r.data.msg) || "";
+    const missing = (msg.indexOf("不存在")>=0 || msg.indexOf("找不到")>=0 || msg.indexOf("未注册")>=0 || msg.indexOf("用户")>=0);
+    if(missing && q && a){
+      const rr = await apiReq("/api/register", "POST", { username:u, password:p, secQ:q, secA:a });
+      if(rr.status === 200 && rr.data.ok){ applyAuth(rr.data); return true; }
     }
-  } catch(e){ /* 离线模式：用本机 localStorage */ }
-  renderAuthBar();
-  populateBackendInput();
+  }
+  return false;
 }
 function renderAuthBar(){
   const el = document.getElementById("authbar"); if(!el) return;
@@ -1181,6 +1217,7 @@ async function doLogin(){
   const r = await apiReq("/api/login", "POST", { username, password });
   if(r.status === 200 && r.data.ok){
     api.online = true; api.user = { username: r.data.username, role: r.data.role };
+    storeCreds(username, password);
     try { localStorage.setItem("API_TOKEN", r.data.token || ""); } catch(e){}
     const pr = await apiReq("/api/progress", "GET"); if(pr.status === 200) applyProgress(pr.data);
     hideModal("loginModal"); renderAuthBar(); initUIState(); renderStages(current);
@@ -1196,6 +1233,7 @@ async function doRegister(){
   const r = await apiReq("/api/register", "POST", { username, password, secQ, secA });
   if(r.status === 200 && r.data.ok){
     api.online = true; api.user = { username: r.data.username, role: r.data.role };
+    storeCreds(username, password, secQ, secA);
     try { localStorage.setItem("API_TOKEN", r.data.token || ""); } catch(e){}
     hideModal("regModal"); renderAuthBar();
     if(r.data.firstAdmin) alert("注册成功！你是首个用户，已自动成为管理员，可管理所有用户进度。");
