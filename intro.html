@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 不神秘 · 给同事的一封科普</title>
+<style>
+  :root{
+    --blue:#1f9d55; --blue2:#157a40; --blue-soft:#e8f6ee;
+    --bg:#f4f8f5; --card:#fff; --line:#dcebe2; --grey:#6f7d76;
+    --ink:#1d2a22; --warn:#c0392b; --gold:#b8860b; --orange:#e08a1e;
+    --scale:1;            /* 字号总开关，由顶部按钮控制 */
+    color-scheme:light;
+  }
+  *{box-sizing:border-box;}
+  html{font-size:calc(17px * var(--scale)); scroll-behavior:smooth;}
+  body{
+    margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,Roboto,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.75;
+    -webkit-text-size-adjust:100%;
+  }
+  /* ===== 顶部条 ===== */
+  .topbar{
+    position:sticky; top:0; z-index:50; background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between;
+    gap:.6rem; padding:.55rem .9rem; flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:center; gap:.5rem; font-weight:800; font-size:1.02rem; color:var(--blue2);}
+  .brand .dot{width:.7rem; height:.7rem; border-radius:50%; background:var(--blue); box-shadow:0 0 0 .25rem var(--blue-soft);}
+  .fsbox{display:flex; align-items:center; gap:.35rem; flex-wrap:wrap;}
+  .fsbox .lbl{font-size:.82rem; color:var(--grey); margin-right:.1rem;}
+  .fsbtn{
+    border:1px solid var(--line); background:#fff; color:var(--blue2);
+    border-radius:999px; padding:.28rem .7rem; cursor:pointer; font-weight:700;
+    font-family:inherit; line-height:1; transition:.15s;
+  }
+  .fsbtn:hover{border-color:var(--blue);}
+  .fsbtn[data-s="小"]{font-size:.78rem;}
+  .fsbtn[data-s="标准"]{font-size:.92rem;}
+  .fsbtn[data-s="大"]{font-size:1.05rem;}
+  .fsbtn[data-s="特大"]{font-size:1.2rem;}
+  .fsbtn.on{background:var(--blue); color:#fff; border-color:var(--blue);}
+  /* 阅读进度条 */
+  .progress{position:fixed; top:0; left:0; height:3px; width:0; background:var(--blue); z-index:60; transition:width .12s;}
+  /* ===== 英雄区 ===== */
+  .hero{
+    position:relative; overflow:hidden; color:#fff;
+    background:linear-gradient(135deg,#1f9d55,#157a40 55%,#0f5e30);
+    padding:3.2rem 1.1rem 3rem; text-align:center;
+  }
+  .hero::after{
+    content:""; position:absolute; inset:0;
+    background:radial-gradient(60% 60% at 80% 10%,rgba(255,255,255,.18),transparent 60%),
+              radial-gradient(50% 50% at 12% 90%,rgba(255,255,255,.12),transparent 60%);
+  }
+  .hero .orb{
+    position:absolute; right:-3rem; top:-3rem; width:11rem; height:11rem; border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.5),rgba(255,255,255,.05) 60%,transparent 70%);
+    animation:float 7s ease-in-out infinite; opacity:.7;
+  }
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(1.2rem)}}
+  .hero>*{position:relative; z-index:1;}
+  .hero .kicker{font-size:.92rem; letter-spacing:.18em; opacity:.9; font-weight:600;}
+  .hero h1{margin:.6rem 0 .4rem; font-size:2.3rem; line-height:1.2; font-weight:900;}
+  .hero p.sub{margin:0 auto; max-width:34rem; font-size:1.05rem; opacity:.95;}
+  .leadquote{
+    margin:1.4rem auto 0; max-width:36rem; background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.3); border-radius:14px; padding:.9rem 1.1rem;
+    font-size:1rem; text-align:left; backdrop-filter:blur(2px);
+  }
+  .leadquote b{color:#d8ffe8;}
+  /* ===== 章节导航 ===== */
+  .rail{
+    position:sticky; top:3.4rem; z-index:40; background:var(--bg);
+    border-bottom:1px solid var(--line); padding:.5rem .6rem;
+    display:flex; gap:.4rem; overflow-x:auto; scrollbar-width:none;
+  }
+  .rail::-webkit-scrollbar{display:none;}
+  .rail a{
+    flex:none; text-decoration:none; color:var(--blue2); font-size:.85rem; font-weight:600;
+    padding:.35rem .7rem; border-radius:999px; border:1px solid transparent; white-space:nowrap;
+  }
+  .rail a:hover{background:var(--blue-soft);}
+  .rail a.active{background:var(--blue); color:#fff;}
+  /* ===== 容器 ===== */
+  .wrap{max-width:820px; margin:0 auto; padding:1.4rem 1.1rem 3rem;}
+  section.sec{padding:1.6rem 0; border-bottom:1px dashed var(--line);}
+  section.sec:last-of-type{border-bottom:none;}
+  .sec .head{display:flex; align-items:center; gap:.7rem; margin-bottom:.7rem;}
+  .sec .num{
+    flex:none; width:2.3rem; height:2.3rem; border-radius:50%; background:var(--blue);
+    color:#fff; font-weight:900; font-size:1.05rem; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 12px rgba(31,157,85,.3);
+  }
+  .sec h2{margin:0; font-size:1.5rem; color:var(--blue2); font-weight:850;}
+  .sec .lead{font-size:1.06rem; color:var(--ink); margin:.2rem 0 .9rem;}
+  .sec p{margin:.5rem 0; font-size:1.02rem;}
+  /* 卡片 */
+  .card{
+    background:var(--card); border:1px solid var(--line); border-left:5px solid var(--blue);
+    border-radius:14px; padding:1rem 1.1rem; margin:.9rem 0; box-shadow:0 2px 10px rgba(20,60,40,.05);
+  }
+  .card h3{margin:0 0 .4rem; font-size:1.1rem; color:var(--blue2); display:flex; align-items:center; gap:.45rem;}
+  .analogy{border-left-color:var(--gold); background:#fffdf5;}
+  .analogy h3{color:var(--gold);}
+  .takeaway{
+    background:var(--blue-soft); border:1px solid #bfe6cf; border-radius:14px;
+    padding:.9rem 1.1rem; margin:1rem 0; font-size:1.05rem; font-weight:600; color:var(--blue2);
+  }
+  .takeaway::before{content:"✅ 记住一句话："; font-weight:800;}
+  /* 例子对比 */
+  .ex{display:grid; grid-template-columns:1fr 1fr; gap:.7rem; margin:1rem 0;}
+  .ex .col{border-radius:12px; padding:.8rem .9rem; font-size:.98rem;}
+  .ex .bad{background:#fdecea; border:1px solid #f5c6c0;}
+  .ex .good{background:#eafaf0; border:1px solid #bfe6cf;}
+  .ex .tag{font-weight:800; font-size:.85rem; display:block; margin-bottom:.3rem;}
+  .ex .bad .tag{color:var(--warn);}
+  .ex .good .tag{color:var(--blue2);}
+  .ex .who{font-size:.8rem; color:var(--grey); margin-top:.4rem;}
+  /* 列表 */
+  ul.clean{margin:.5rem 0; padding-left:1.1rem;}
+  ul.clean li{margin:.45rem 0; font-size:1.02rem;}
+  ul.clean li b{color:var(--blue2);}
+  /* 警告卡 */
+  .warnbox{background:#fff6f5; border:1px solid #f3c9c4; border-left:5px solid var(--warn); border-radius:14px; padding:1rem 1.1rem; margin:1rem 0;}
+  .warnbox h3{margin:0 0 .4rem; color:var(--warn); font-size:1.1rem;}
+  /* CTA */
+  .cta{background:linear-gradient(135deg,#1f9d55,#157a40); color:#fff; border-radius:18px; padding:1.6rem 1.3rem; text-align:center; margin-top:1.6rem;}
+  .cta h2{color:#fff; margin:0 0 .5rem; font-size:1.5rem;}
+  .cta p{opacity:.95; font-size:1.05rem;}
+  .cta a{
+    display:inline-block; margin-top:.9rem; background:#fff; color:var(--blue2); font-weight:800;
+    text-decoration:none; padding:.7rem 1.4rem; border-radius:999px; font-size:1.05rem;
+  }
+  .cta a:hover{box-shadow:0 6px 18px rgba(0,0,0,.2);}
+  footer{text-align:center; color:var(--grey); font-size:.85rem; padding:1.4rem 1rem 2.4rem;}
+  footer a{color:var(--blue2);}
+  /* 滚动淡入 */
+  .reveal{opacity:0; transform:translateY(22px); transition:opacity .6s ease, transform .6s ease;}
+  .reveal.in{opacity:1; transform:none;}
+  @media (prefers-reduced-motion:reduce){ .reveal{opacity:1; transform:none; transition:none;} .hero .orb{animation:none;} }
+  @media (max-width:560px){ .ex{grid-template-columns:1fr;} .hero h1{font-size:1.9rem;} .sec h2{font-size:1.3rem;} }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span>AI 通识小课堂</div>
+  <div class="fsbox">
+    <span class="lbl">字号</span>
+    <button class="fsbtn" data-s="小">小</button>
+    <button class="fsbtn" data-s="标准">标准</button>
+    <button class="fsbtn" data-s="大">大</button>
+    <button class="fsbtn" data-s="特大">特大</button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="orb"></div>
+  <div class="kicker">内部科普 · 给每一位同事</div>
+  <h1>AI 不神秘，<br>它只是个会干活的助手</h1>
+  <p class="sub">不用懂代码，不用会英文。看完这几页，你就能明白：AI 是什么、它能帮你干什么、怎么跟它"说话"最顺手。</p>
+  <div class="leadquote">
+    💬 <b>领导说：</b>现在"AI 智能体（Agent）辅助工作"是个大趋势，也是我们靠智能体提升效率的关键期。公司希望大家都来认识它、用起来——不是取代谁，而是让每个人的活儿干得更轻松、更漂亮。
+  </div>
+</header>
+
+<nav class="rail" id="rail">
+  <a href="#s1">1 · AI 是什么</a>
+  <a href="#s2">2 · 怎么帮你干活</a>
+  <a href="#s3">3 · Prompt 提示词</a>
+  <a href="#s4">4 · Skill 技能</a>
+  <a href="#s5">5 · Agent 智能体</a>
+  <a href="#s6">6 · 安全边界</a>
+  <a href="#s7">7 · 怎么开始</a>
+</nav>
+
+<main class="wrap">
+
+  <!-- 1 -->
+  <section class="sec reveal" id="s1">
+    <div class="head"><div class="num">1</div><h2>AI 是什么</h2></div>
+    <p class="lead">一句话：AI 就是"会自己学、能听懂人话、还能帮你产出东西"的软件大脑。</p>
+    <div class="card">
+      <h3>🤖 它和以前的软件有啥不一样？</h3>
+      <p>老式软件是"照菜谱做菜"——程序员把每一步都写死，它只会按规则跑。现在的 AI（特别是"大模型"）是"吃过千家饭的大厨"——它读了海量的书、文章、对话，自己摸出了语言的规律。你给它一个新问题，它凭"经验"就能回答，不用你一步步教。</p>
+    </div>
+    <div class="card analogy">
+      <h3>💡 打个比方</h3>
+      <p>就像<b>电饭煲</b>：你不用懂电路、不用会煮饭，按一下"煮饭"键，它就给你端出一锅好饭。AI 也一样——你不用懂代码，说一句人话，它就帮你写文案、做总结、翻翻译。它的"锅"里装的是知识，不是程序。</p>
+    </div>
+    <p>所以别被"人工智能"四个字吓到。它既不是能独立思考的机器人，也不是只能算数的计算器，而是一条<b>"你用大白话使唤、它替你动脑动手"的通道</b>。</p>
+    <div class="takeaway">AI 不是科幻里的机器人，是一套"会学习的软件大脑"，你用大白话就能使唤它。</div>
+  </section>
+
+  <!-- 2 -->
+  <section class="sec reveal" id="s2">
+    <div class="head"><div class="num">2</div><h2>它能怎么帮你干活</h2></div>
+    <p class="lead">它最擅长"动笔、动嘴、动脑的重复性脑力活"。你交代清楚，它先干第一版，你再来把关。</p>
+    <div class="card">
+      <h3>📋 日常就能用的场景</h3>
+      <ul class="clean">
+        <li><b>写东西</b>：周报、邮件、通知、发言稿——给个提纲它就能扩写。</li>
+        <li><b>读东西</b>：把 30 页报告丢给它，3 秒出要点；把乱糟糟的聊天记录，整理成待办清单。</li>
+        <li><b>改东西</b>：润色、缩写、换成更客气的语气、翻译成英文。</li>
+        <li><b>答问题</b>：回答客户的常见咨询、解释公司制度、查知识点。</li>
+        <li><b>理数据</b>：把表格里的信息归类、算小计、找异常。</li>
+      </ul>
+    </div>
+    <div class="card analogy">
+      <h3>💡 打个比方</h3>
+      <p>它像个<b>"24 小时不下班、不喊累、不要加薪的实习生"</b>。你交代清楚任务，它就开干；干完你扫一眼、改两笔，活儿就齐了。你省下的是最累的"从零开始"，留下的是最值钱的"判断和拍板"。</p>
+    </div>
+    <div class="takeaway">让它替你做"第一版"，你做"拍板的人"。别让它替你负责，让它替你省时间。</div>
+  </section>
+
+  <!-- 3 -->
+  <section class="sec reveal" id="s3">
+    <div class="head"><div class="num">3</div><h2>Prompt（提示词）是什么</h2></div>
+    <p class="lead">Prompt 就是你给 AI 下的"任务单"。你写得越清楚，它干得越对——这比"会不会用工具"更重要。</p>
+    <div class="card">
+      <h3>✍️ 一张好任务单，记住三件事</h3>
+      <ul class="clean">
+        <li><b>做什么</b>：写邮件？做总结？想点子？</li>
+        <li><b>给什么材料</b>：把要说的事、要处理的原文贴给它。</li>
+        <li><b>要啥样</b>：字数、语气、格式、给谁看。</li>
+      </ul>
+    </div>
+    <div class="ex">
+      <div class="col bad">
+        <span class="tag">❌ 模糊的说法</span>
+        "帮我写个东西。"
+        <div class="who">——像对新同事甩一句话就走，他只能懵。</div>
+      </div>
+      <div class="col good">
+        <span class="tag">✅ 清楚的说法</span>
+        "给王总写封 200 字邮件，语气客气，说明我们周五交方案，并问是否方便电话沟通。"
+        <div class="who">——一次到位，他照着就能交差。</div>
+      </div>
+    </div>
+    <div class="card analogy">
+      <h3>💡 打个比方</h3>
+      <p>Prompt 就像<b>给新来的同事交代工作</b>。你说"帮我写个东西"，他不知道从哪下手；你说清"给谁写、写多长、什么口气、说什么事"，他一次就做对。AI 也是这个脾气——<b>你说得越像"人话里的明白话"，它越靠谱</b>。</p>
+    </div>
+    <div class="takeaway">不会写 Prompt 没关系，先学会"说清楚：做什么、给什么、要啥样"。</div>
+  </section>
+
+  <!-- 4 -->
+  <section class="sec reveal" id="s4">
+    <div class="head"><div class="num">4</div><h2>Skill（技能）是什么</h2></div>
+    <p class="lead">Skill 是给 AI 装的"专用工具/插件"。光聊天，AI 不懂你们公司的系统；装上 Skill，它才真能动手办事。</p>
+    <div class="card">
+      <h3>🔧 为什么需要它？</h3>
+      <p>会聊天的 AI 像个全能助手，但它"手边没有工具"——查不了你们的内部数据、发不出邮件、读不了你们的 Excel。Skill 就是把一个个"专用工具"交给它：查库存的、读表格的、发消息的、连业务系统的……装上了，它从"嘴上说说"变成"真能干完"。</p>
+    </div>
+    <div class="card analogy">
+      <h3>💡 打个比方</h3>
+      <p>Skill 是 AI 随身带的<b>"工具箱"</b>：扳手（查数据）、尺子（算指标）、对讲机（发消息）。没工具箱，它只能给你出主意；有工具箱，它把活儿从开头干到结尾。公司后面接入的各类系统，大多就是通过 Skill 接进来的。</p>
+    </div>
+    <div class="takeaway">Prompt 决定"说什么"，Skill 决定"能动手干什么"。两者合起来，AI 才从聊天变干活。</div>
+  </section>
+
+  <!-- 5 -->
+  <section class="sec reveal" id="s5">
+    <div class="head"><div class="num">5</div><h2>Agent（智能体）是什么</h2></div>
+    <p class="lead">这是领导最看好的方向。普通 AI 是"你问一句、它答一句"；Agent 是你给个目标，它自己跑完一整套流程。</p>
+    <div class="card">
+      <h3>🧭 它强在哪？</h3>
+      <p>你不用把每一步都拆好喂给它。你只说"把这月销售做个分析，发给经理"，它会自己：<b>找数据 → 算指标 → 画图表 → 写结论 → 发邮件</b>；中间卡住了，它还会想办法绕过去，而不是干瞪眼。</p>
+    </div>
+    <div class="card analogy">
+      <h3>💡 打个比方</h3>
+      <p>普通 AI 像"你问它才答的客服"；Agent 像"你交代个目标、它自己扛活的靠谱员工"。你说"把这件事办了"，它自己列计划、调工具、边干边检查，直到交付。这正是领导说的——<b>从"辅助单步"升级到"托管一整串活"，是提效的关键</b>。</p>
+    </div>
+    <div class="card">
+      <h3>🧩 Agent 的四种常见本事（通俗版）</h3>
+      <ul class="clean">
+        <li><b>会复盘</b>：干完自己检查一遍，不对就改（行内叫 Reflection）。</li>
+        <li><b>会用工具</b>：查资料、发消息、读文件，不只会动嘴（Tool use）。</li>
+        <li><b>会规划</b>：先想好分几步走，再动手，不瞎撞（Planning）。</li>
+        <li><b>会分工</b>：几个 AI 各管一摊，像小组合作（Multi-agent）。</li>
+      </ul>
+    </div>
+    <div class="takeaway">Agent = 给 AI 一个目标，它自己跑流程。这是现在最值得关注的方向。</div>
+  </section>
+
+  <!-- 6 -->
+  <section class="sec reveal" id="s6">
+    <div class="head"><div class="num">6</div><h2>安全与边界</h2></div>
+    <p class="lead">AI 很能干，但有两个毛病：会"一本正经地胡说"（叫幻觉），也会记不住隐私。三件事别让它独断。</p>
+    <div class="warnbox">
+      <h3>⚠️ 这三类事，一定自己把关</h3>
+      <ul class="clean">
+        <li><b>密码、身份证、客户机密</b>——别贴给 AI，更别让它替你发。</li>
+        <li><b>重要决定</b>——它给建议，你来拍板；升职、签约、赔偿这类，人说了算。</li>
+        <li><b>它说"一定对"的话</b>——数字、日期、政策，务必自己复核一遍。</li>
+      </ul>
+    </div>
+    <div class="card analogy">
+      <h3>💡 打个比方</h3>
+      <p>AI 像<b>能力强但要你签字确认的新手同事</b>。活儿交给他省心，但公章和密码不能都塞给他。让它当"助手"，别让它当"老板"——敏感事你把关，重要活你复核，它就稳稳帮你提效。</p>
+    </div>
+    <div class="takeaway">让 AI 当"助手"不是"老板"；敏感事你把关，重要活你复核。</div>
+  </section>
+
+  <!-- 7 -->
+  <section class="sec reveal" id="s7">
+    <div class="head"><div class="num">7</div><h2>怎么开始</h2></div>
+    <p class="lead">不用报班，不用啃书。今天就试一件小事，比看十篇科普都管用。</p>
+    <div class="card">
+      <h3>🚀 三步上车</h3>
+      <ul class="clean">
+        <li><b>挑一个你最烦的重复活</b>：写周报、翻翻译、理聊天记录都行。</li>
+        <li><b>写清任务单</b>：做什么 + 给什么材料 + 要啥样（回看第 3 节）。</li>
+        <li><b>看结果、改两笔</b>：不对就告诉它"再短点/换个口气"，来回一两轮就顺了。</li>
+      </ul>
+    </div>
+    <div class="cta">
+      <h2>想系统学、边学边练？</h2>
+      <p>我们有一份"AI 学习闯关看板"，分模块、带小测、有详细解析，每天十分钟就能攒本事。</p>
+      <a href="/">👉 打开学习闯关看板</a>
+    </div>
+  </section>
+
+  <footer>
+    内部科普材料 · 用大白话讲清 AI / Prompt / Skill / Agent ｜ 字号可随时在右上角调节<br>
+    想深学？回到 <a href="/">学习闯关看板</a>
+  </footer>
+</main>
+
+<script>
+  // ===== 字号控制 =====
+  (function(){
+    var KEY="intro_fs";
+    var levels={"小":0.88,"标准":1.0,"大":1.25,"特大":1.55};
+    var btns=document.querySelectorAll(".fsbtn");
+    function apply(name){
+      var v=levels[name]||1.0;
+      document.documentElement.style.setProperty("--scale",v);
+      btns.forEach(function(b){ b.classList.toggle("on", b.dataset.s===name); });
+      try{localStorage.setItem(KEY,name);}catch(e){}
+    }
+    btns.forEach(function(b){ b.addEventListener("click",function(){ apply(b.dataset.s); }); });
+    var saved="标准";
+    try{saved=localStorage.getItem(KEY)||"标准";}catch(e){}
+    apply(saved);
+  })();
+
+  // ===== 阅读进度条 =====
+  var prog=document.getElementById("progress");
+  function onScroll(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    var p=max>0?(h.scrollTop||document.body.scrollTop)/max*100:0;
+    prog.style.width=p+"%";
+  }
+  window.addEventListener("scroll",onScroll,{passive:true}); onScroll();
+
+  // ===== 滚动淡入 + 章节高亮 =====
+  var reveals=document.querySelectorAll(".reveal");
+  if("IntersectionObserver" in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target);} });
+    },{threshold:0.12});
+    reveals.forEach(function(r){ io.observe(r); });
+  } else { reveals.forEach(function(r){ r.classList.add("in"); }); }
+
+  var railLinks=document.querySelectorAll("#rail a");
+  var secs=document.querySelectorAll("section.sec");
+  if("IntersectionObserver" in window){
+    var io2=new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){
+          var id=e.target.id;
+          railLinks.forEach(function(a){ a.classList.toggle("active", a.getAttribute("href")==="#"+id); });
+        }
+      });
+    },{rootMargin:"-45% 0px -50% 0px"});
+    secs.forEach(function(s){ io2.observe(s); });
+  }
+</script>
+</body>
+</html>

@@ -248,17 +248,25 @@ const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; cha
   ".png": "image/png", ".svg": "image/svg+xml", ".ico": "image/x-icon" };
 function serveStatic(req, res, pathname) {
   let rel = pathname === "/" ? "/index.html" : pathname;
-  const fp = path.join(PUB, path.normalize(rel).replace(/^(\.\.[\/\\])+/, ""));
-  if (!fp.startsWith(PUB) || !fs.existsSync(fp) || fs.statSync(fp).isDirectory()) {
-    // SPA fallback to index.html：优先 public/，其次仓库根目录（方便直接把 index.html 拖进 render-backend/ 部署）
-    const idxPub = path.join(PUB, "index.html");
-    const idxRoot = path.join(ROOT, "index.html");
-    const idx = fs.existsSync(idxPub) ? idxPub : (fs.existsSync(idxRoot) ? idxRoot : null);
-    if (idx) { res.writeHead(200, { "Content-Type": MIME[".html"] }); return res.end(fs.readFileSync(idx)); }
-    return send(res, 404, { ok: false, msg: "not found" });
+  const safe = path.normalize(rel).replace(/^(\.\.[\/\\])+/, "");
+  // 1) 优先 public/（render-backend/public/）
+  const fp = path.join(PUB, safe);
+  if (fp.startsWith(PUB) && fs.existsSync(fp) && !fs.statSync(fp).isDirectory()) {
+    res.writeHead(200, { "Content-Type": MIME[path.extname(fp)] || "application/octet-stream" });
+    return res.end(fs.readFileSync(fp));
   }
-  res.writeHead(200, { "Content-Type": MIME[path.extname(fp)] || "application/octet-stream" });
-  res.end(fs.readFileSync(fp));
+  // 2) 仓库根目录（扁平部署：index.html / intro.html 直接拖到 GitHub 仓库根）
+  const rf = path.join(ROOT, safe);
+  if (rf.startsWith(ROOT) && fs.existsSync(rf) && !fs.statSync(rf).isDirectory()) {
+    res.writeHead(200, { "Content-Type": MIME[path.extname(rf)] || "application/octet-stream" });
+    return res.end(fs.readFileSync(rf));
+  }
+  // 3) SPA 兜底到 index.html：优先 public/，其次仓库根目录
+  const idxPub = path.join(PUB, "index.html");
+  const idxRoot = path.join(ROOT, "index.html");
+  const idx = fs.existsSync(idxPub) ? idxPub : (fs.existsSync(idxRoot) ? idxRoot : null);
+  if (idx) { res.writeHead(200, { "Content-Type": MIME[".html"] }); return res.end(fs.readFileSync(idx)); }
+  return send(res, 404, { ok: false, msg: "not found" });
 }
 
 const server = http.createServer((req, res) => {
