@@ -272,14 +272,25 @@ function serveStatic(req, res, pathname) {
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
   const p = url.pathname;
+  // Render 健康检查（健康检查只接受毫秒级响应，超时即认为 unhealth）
+  if (p === "/healthz" || p === "/health") { send(res, 200, "ok"); return; }
   if (p.startsWith("/api/")) {
     handleApi(req, res, p).catch(e => send(res, 500, { ok: false, msg: "服务器错误", err: String(e) }));
   } else {
     serveStatic(req, res, p);
   }
 });
+// 监听失败 / 端口冲突 都要把错误打出来（之前被吞了，所以 Logs 只有 Render 那两行）
+server.on("error", e => {
+  console.error("[server.error]", e.code, e.message, "PORT=" + PORT);
+  // EADDRINUSE 老进程占着端口，重启时硬退，让 Render 起新实例接管
+  if (e.code === "EADDRINUSE") process.exit(1);
+});
 server.listen(PORT, () => {
   console.log("AI 学习看板后端已启动: http://localhost:" + PORT);
   console.log("数据目录:", DATA);
   console.log("管理员提示：首个注册的用户将自动成为管理员。");
 });
+// Render 重部署会用 SIGTERM 杀进程，确保 listen 句柄及时释放，下一个实例能立刻 bind 同一端口
+process.on("SIGTERM", () => { console.log("[sigterm] 优雅退出"); server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 2000).unref(); });
+process.on("uncaughtException", e => { console.error("[uncaughtException]", e); });
