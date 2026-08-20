@@ -5,23 +5,68 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NPDP 产品经理认证 · 闯关学习看板</title>
 <style>
-  :root{--blue:#1f9d55;--blue2:#157a40;--bg:#f1f5fb;--card:#fff;--line:#dce6f2;--green:#2e9e5b;--grey:#8aa39d;--lock:#c0392b;--gold:#b8860b;--orange:#e08a1e; color-scheme:light dark;}
-body.course-tealgold{--blue:#4f46e5;--blue2:#3730a3;--bg:#f3f3fb;--line:#e3e3f3;--grey:#8a8a9d;--green:#2e9e5b;--lock:#c0392b;--gold:#b8860b;--orange:#e08a1e;}
+  :root{--blue:#6B8CAE;--blue2:#4E7295;--bg:#F2F5F9;--card:#fff;--line:#DDE4EB;--green:#2e9e5b;--grey:#7d8a9a;--lock:#c0392b;--gold:#b8860b;--orange:#e08a1e; color-scheme:light dark;}
+body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;--grey:#8a8a9d;--green:#2e9e5b;--lock:#c0392b;--gold:#b8860b;--orange:#e08a1e;}
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,Roboto,sans-serif;background:var(--bg);color:#1f2733;}
   .app{max-width:920px;margin:0 auto;padding:18px 14px 86px;}
+  /* 宽屏桌面布局：内容区加宽，模块两列，消灭右侧大片空白 */
+  @media(min-width:1024px){
+    .app{max-width:1200px;padding:24px 24px 90px;}
+    header{padding:26px 30px;}
+    header h1{font-size:24px;}
+    .tabs{gap:12px;}
+    .tabs button.ctile{padding:14px 14px;}
+    .tabs button.ctile .cnum{font-size:24px;}
+    .tabs button.ctile .cname{font-size:13px;}
+    .tabs button.ctile .cstat{font-size:11px;}
+    .stage{padding:20px;}
+    /* 章节内模块列表排两列；目标/进度条/说明/收起按钮整行跨列 */
+    .sbody{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start;}
+    .sbody > .goal,.sbody > .sbar,.sbody > .smeta,.sbody > .lockbanner,.sbody > .foldbar{grid-column:1/-1;}
+    .mod{min-width:0;}
+  }
+  /* 宽屏桌面布局：内容区加宽，模块两列，消灭右侧大片空白 */
+  @media(min-width:1024px){
+    .app{max-width:1200px;padding:24px 24px 90px;}
+    header{padding:26px 30px;}
+    header h1{font-size:24px;}
+    .tabs{gap:12px;}
+    .tabs button.ctile{padding:14px 14px;}
+    .tabs button.ctile .cnum{font-size:24px;}
+    .tabs button.ctile .cname{font-size:13px;}
+    .tabs button.ctile .cstat{font-size:11px;}
+    .stage{padding:20px;}
+    /* 章节内模块列表排两列；目标/进度条/说明/收起按钮整行跨列 */
+    .sbody{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start;}
+    .sbody > .goal,.sbody > .sbar,.sbody > .smeta,.sbody > .lockbanner,.sbody > .foldbar{grid-column:1/-1;}
+    .mod{min-width:0;}
+  }
   header{background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;border-radius:16px;padding:20px 22px;box-shadow:0 6px 18px rgba(31,56,100,.18);}
   header h1{margin:0 0 4px;font-size:20px;}
   header p{margin:0;opacity:.85;font-size:13px;}
   .overall{margin-top:16px;}
   .obar{height:14px;background:rgba(255,255,255,.25);border-radius:8px;overflow:hidden;}
-  .obar>i{display:block;height:100%;background:#7ee0a0;width:0;transition:width .4s;}
+  .obar>i{display:block;height:100%;background:#D0DAE6;width:0;transition:width .4s;}
   .ostat{display:flex;justify-content:space-between;font-size:13px;margin-top:8px;}
   .ostat.unlock{margin-top:4px;opacity:.9;font-size:12.5px;}
-  .tabs{display:flex;gap:8px;overflow-x:auto;padding:14px 0 6px;position:sticky;top:0;background:var(--bg);z-index:5;}
-  .tabs button{border:1px solid var(--line);background:#fff;color:#33415c;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;white-space:nowrap;}
-  .tabs button.on{background:var(--blue);color:#fff;border-color:var(--blue);}
-  .tabs button.locked{color:var(--lock);border-color:#f0cfcf;background:#fff5f5;}
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:16px 0 10px;position:sticky;top:0;background:var(--bg);z-index:5;}
+  @media(max-width:560px){.tabs{grid-template-columns:repeat(2,1fr)}}
+  .tabs button.ctile{position:relative;display:flex;flex-direction:column;gap:6px;padding:12px 10px;border:1px solid var(--line);border-radius:12px;background:var(--card);text-align:left;cursor:pointer;transition:all .2s ease;overflow:hidden;}
+  .tabs button.ctile::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--blue);opacity:0;transition:opacity .2s;}
+  .tabs button.ctile.on::before{opacity:1}
+  .tabs button.ctile.on{border-color:var(--blue);background:linear-gradient(180deg,rgba(107,140,174,.08),#fff);}
+  .tabs button.ctile:hover:not(.locked){transform:translateY(-1px);border-color:var(--blue);}
+  .tabs button.ctile .cnum{font-size:20px;font-weight:300;color:var(--blue);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.5px;}
+  .tabs button.ctile.on .cnum{font-weight:400}
+  .tabs button.ctile .cname{font-size:11.5px;font-weight:600;color:#1f2733;line-height:1.25;}
+  .tabs button.ctile .cstat{font-size:10px;color:var(--grey);line-height:1.2;}
+  .tabs button.ctile .cbar{height:3px;background:#eef1f6;border-radius:3px;overflow:hidden;margin-top:2px;}
+  .tabs button.ctile .cbar i{display:block;height:100%;background:var(--blue);width:0;transition:width .3s;}
+  .tabs button.ctile.locked{opacity:.4;filter:saturate(.2);}
+  .tabs button.ctile.locked .cnum{color:#aab3bf}
+  .tabs button.ctile.alltile{flex-direction:row;align-items:center;justify-content:center;gap:6px;font-size:12px;color:var(--grey);background:#fbfdff;}
+  .tabs button.ctile.alltile.on{background:var(--card);border-color:var(--blue);color:var(--blue)}
   .stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(31,56,100,.05);}
   .stage h2{margin:0 0 2px;font-size:16px;color:var(--blue2);display:flex;align-items:center;flex-wrap:wrap;gap:6px;}
   /* 章节标题整行可点开/收起，内含箭头；其下 .sbody 为可折叠的模块列表 */
@@ -521,7 +566,7 @@ function setCourse(id){
   loadCourseState();
   migrateQbest();
   applyTheme(); applyFont();
-  overall(); renderUnlock(); renderTabs(); initUIState(); renderStages(current); renderMilestones(); renderSkills();
+  overall(); renderUnlock(); initUIState(); renderTabs(); renderStages(current); renderMilestones(); renderSkills();
   renderQuizSelect(); quizStage = firstAvailableStage(); renderQuiz();
   const sw = document.getElementById("courseSwitch"); if(sw) sw.querySelectorAll("button").forEach(b=>b.classList.toggle("on", b.dataset.c===id));
 }
@@ -575,14 +620,31 @@ function renderUnlock(){ document.getElementById("unlockText").textContent = "�
 
 function renderTabs(){
   const tabs = document.getElementById("tabs");
-  tabs.innerHTML = '<button data-f="all" class="'+(current==="all"?"on":"")+'">全部</button>';
+  let html = '<button class="ctile alltile '+(current==="all"?"on":"")+'" data-f="all"><span>📋</span><span>全部章节</span></button>';
   DATA.stages.forEach(s=>{
     const locked = !isStageUnlocked(s.id);
-    const cls = (String(s.id)===String(current)?"on":"") + (locked?" locked":"");
-    tabs.insertAdjacentHTML("beforeend",'<button data-f="'+s.id+'" class="'+cls+'">'+s.id+'. '+s.name+(locked?" 🔒":"")+'</button>');
+    const on = (String(s.id)===String(current));
+    const list = tasksOfStage(s.name);
+    const dn = list.filter(t=>done[t.id]).length;
+    const tot = list.length;
+    const pct = tot ? Math.round(dn/tot*100) : 0;
+    const stat = locked ? "🔒 未解锁" : (tot>0&&dn>=tot ? "✓ 已完成" : (dn>0 ? ("进行中 "+dn+"/"+tot) : "未开始"));
+    const barW = locked ? 0 : pct;
+    const numStr = String(s.id).padStart(2,'0');
+    html += '<button class="ctile '+(on?"on":"")+(locked?" locked":"")+'" data-f="'+s.id+'">'
+      + '<span class="cnum">'+numStr+'</span>'
+      + '<span class="cname">'+s.name+'</span>'
+      + '<span class="cstat">'+stat+'</span>'
+      + '<span class="cbar"><i style="width:'+barW+'%"></i></span>'
+      + '</button>';
   });
+  tabs.innerHTML = html;
   tabs.querySelectorAll('button').forEach(b=>{
-    b.addEventListener('click', e=>{ current = e.target.dataset.f; renderTabs(); renderStages(current); });
+    b.addEventListener('click', e=>{
+      current = e.currentTarget.dataset.f;
+      renderTabs(); renderStages(current);
+      var bb=document.getElementById('board'); if(bb){var cb=document.querySelector('.courseBar');var off=(cb?cb.offsetHeight:0)+8;var y=bb.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop)-off;window.scrollTo({top:Math.max(0,y),behavior:'smooth'});}
+    });
   });
 }
 
@@ -884,9 +946,11 @@ function renderStages(filter){
 
 // 初始 UI 状态：仅默认展开「第一个已解锁章节」，本章所有小节全部折叠（十个小节待点开，互不级联）
 function initUIState(){
+  let firstU = 1;
   for(let i=1;i<=DATA.stages.length;i++){
-    if(isStageUnlocked(i)){ chapterOpen[i] = true; break; }
+    if(isStageUnlocked(i)){ firstU = i; chapterOpen[i] = true; break; }
   }
+  current = String(firstU);
 }
 
 function renderMilestones(){
