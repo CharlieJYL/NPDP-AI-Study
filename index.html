@@ -20,7 +20,7 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
   @media(min-width:1280px){
     .app{max-width:1180px;}
   }
-  header{background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;border-radius:16px;padding:20px 22px;box-shadow:0 6px 18px rgba(31,56,100,.18);}
+  header{background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;border-radius:16px;padding:20px 22px;box-shadow:0 6px 18px rgba(31,56,100,.18);position:relative;}
   header h1{margin:0 0 4px;font-size:20px;}
   header p{margin:0;opacity:.85;font-size:13px;}
   .overall{margin-top:16px;}
@@ -55,10 +55,17 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
   .tabs button:nth-child(4n){ border-right:none; }
   .tabs button:nth-last-child(-n+4){ border-bottom:none; }
   @media(max-width:560px){
-    .tabs button:nth-child(4n){ border-right:1px solid var(--line); }
-    .tabs button:nth-child(2n){ border-right:none; }
-    .tabs button:nth-last-child(-n+4){ border-bottom:none; }
-    .tabs button:nth-last-child(-n+2){ border-bottom:none; }
+    .tabs button:nth-child(2n){ border-right:none; }            /* 2列布局：偶数位(2,4,6,8)不画右边界 */
+    .tabs button:nth-last-child(-n+2){ border-bottom:none; }    /* 只有最后一行(7,8)不画下边界；5-6 之间的分割线要保留 */
+    /* sticky 触发后压缩为单行 4 列横滑条：避免占半个屏幕 */
+    .tabs.compact{grid-template-columns:repeat(4,1fr);}
+    .tabs.compact button{padding:7px 4px 6px;}
+    .tabs.compact .tid{font-size:10px;}
+    .tabs.compact .tname{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+    .tabs.compact .tstat{display:none;}
+    .tabs.compact button:nth-child(2n){border-right:1px solid var(--line);}
+    .tabs.compact button:nth-child(4n){border-right:none;}
+    .tabs.compact button:nth-last-child(-n+4){border-bottom:none;}
   }
   .tabs button:hover{ background:rgba(107,140,174,.05); color:var(--blue); }
   .tabs button.on{
@@ -309,6 +316,33 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
   body.dark .courseSwitch{background:rgba(255,255,255,.16);}
   .barTip{font-size:11.5px;color:var(--grey);text-align:center;margin:0 -14px 12px;padding:0 14px;}
   body.dark .barTip{color:#9fb0ad;}
+
+  /* 已学模块折叠开关（一键压扁所有 .mod.done 列表项） */
+  .board-tools{display:flex;justify-content:flex-end;margin:6px 2px 8px;}
+  .board-tools button{
+    border:1px solid var(--line);background:var(--card);color:#55617a;
+    border-radius:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;
+    transition:background .15s,color .15s,border-color .15s;
+  }
+  .board-tools button.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .board-tools button:active{background:#eef2f8;}
+  body.dark .board-tools button{background:var(--card);color:#cdd6e4;border-color:var(--line);}
+  body.collapseAllDone .mod.done > .body{display:none;}
+  body.collapseAllDone .mod.done > .head{padding:9px 13px;}
+  body.collapseAllDone .mod.done > .head .ttl{font-size:13px;color:var(--green);}
+  body.collapseAllDone .mod.done .chk{padding-left:8px;}
+  body.collapseAllDone .mod.done > .head::after{content:"已完成";font-size:10.5px;color:var(--green);background:#eafaf0;padding:1px 6px;border-radius:9px;margin-left:6px;}
+  /* 移动端 header 重排：标题独占一行（之前被 .courseSwitch 170px 硬约束挤压成竖排 4 行），
+     课程切换 + 同步按钮另起行；右上角腾出空间给同步图标 */
+  @media(max-width:560px){
+    header{padding:18px 16px;}
+    .hrow{flex-direction:column;align-items:stretch;gap:10px;}
+    .htitles{width:100%;min-width:0;padding-right:96px;}
+    header h1{font-size:18px;}
+    .courseSwitch{width:100%;min-width:0;flex:1 1 auto;}
+    .bkTools{position:absolute;top:16px;right:16px;}
+  }
   /* ===== 继续学习 CTA ===== */
   .cta{display:flex;gap:10px;align-items:center;margin-top:14px;}
   .cta button{background:#ffd24d;border:none;border-radius:12px;padding:11px 16px;font-size:14px;font-weight:700;color:#3a2c00;cursor:pointer;flex:1;}
@@ -407,6 +441,11 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
     </div>
   </header>
   <p class="barTip">进度只存在「当前这个链接」的浏览器里 · 换链接/设备前先点 备份</p>
+  <div class="board-tools">
+    <button id="toggleDoneAll" type="button" aria-label="切换已完成模块折叠">
+      <span class="tdArrow">▾</span><span class="tdText">收起已完成模块</span><span class="tdCount" id="tdCount">(0)</span>
+    </button>
+  </div>
 
   <div id="authbar" class="authbar"></div>
 
@@ -1571,6 +1610,50 @@ function migrateQbest(){
 function initApp(){
   setCourse(currentCourse);
   switchView("board"); renderStats();
+  setupTabsCompact();
+  // 恢复"收起已完成"偏好 + 实时统计数量
+  try{ if(localStorage.getItem('collapseDoneAll')==='1') toggleAllDone(); }catch(e){}
+  // 监听模块完成状态变化，实时刷新数量与按钮样式
+  const board = document.getElementById('board');
+  if(board && 'MutationObserver' in window){
+    new MutationObserver(refreshDoneCount).observe(board, { subtree:true, attributes:true, attributeFilter:['class'] });
+    refreshDoneCount();
+  }
+}
+
+// 章节导航栏吸顶后压缩为一行（移动端节省一半屏幕）
+function setupTabsCompact(){
+  const tabs = document.getElementById('tabs');
+  if(!tabs || !('IntersectionObserver' in window)) return;
+  // 在 tabs 上方插入 1px 哨兵：滚出视口 = tabs 进入 sticky 吸顶态
+  const sentinel = document.createElement('div');
+  sentinel.id = 'tabs-sentinel';
+  sentinel.style.cssText = 'height:1px;width:100%;pointer-events:none;';
+  tabs.parentNode.insertBefore(sentinel, tabs);
+  const io = new IntersectionObserver(([e])=>{
+    tabs.classList.toggle('compact', !e.isIntersecting);
+  }, { threshold: 0 });
+  io.observe(sentinel);
+}
+
+// "收起已完成模块"开关 + 完成度实时统计
+function refreshDoneCount(){
+  const list = document.querySelectorAll('#board .mod.done');
+  const el = document.getElementById('tdCount');
+  if(el) el.textContent = '(' + list.length + ')';
+  const btn = document.getElementById('toggleDoneAll');
+  if(btn) btn.classList.toggle('on', document.body.classList.contains('collapseAllDone'));
+}
+function toggleAllDone(){
+  document.body.classList.toggle('collapseAllDone');
+  const collapsed = document.body.classList.contains('collapseAllDone');
+  const btn = document.getElementById('toggleDoneAll');
+  if(btn){
+    btn.querySelector('.tdArrow').textContent = collapsed ? '▸' : '▾';
+    btn.querySelector('.tdText').textContent = collapsed ? '展开已完成模块' : '收起已完成模块';
+    btn.classList.toggle('on', collapsed);
+  }
+  try{ localStorage.setItem('collapseDoneAll', collapsed ? '1' : '0'); }catch(e){}
 }
 checkSession().finally(initApp);
 </script>
