@@ -29,16 +29,17 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
   .ostat{display:flex;justify-content:space-between;font-size:13px;margin-top:8px;}
   .ostat.unlock{margin-top:4px;opacity:.9;font-size:12.5px;}
   /* 顶部章节导航：传统 tab bar，等宽、选中加底线，最不出错 */
+  /* 吸顶挂在 wrapper 上（tabs 移动端是横向滚动容器，overlay 提示层需要不随内容滚动的定位父级） */
+  .tabsWrap{position:sticky;top:0;z-index:5;}
+  .tabHintArrow{display:none;} /* 桌面端不显示，仅移动端横滑时出现 */
   .tabs{
     display:grid;grid-template-columns:repeat(4,1fr);gap:0;
     background:var(--card);
-    position:sticky;top:0;z-index:5;
     border-radius:12px;
     border:1px solid var(--line);
     overflow:hidden;
     box-shadow:0 2px 6px rgba(31,56,100,.04);
   }
-  @media(max-width:560px){ .tabs{grid-template-columns:repeat(2,1fr);} }
   .tabs button{
     position:relative;
     border:none;background:transparent;
@@ -48,25 +49,59 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
     line-height:1.25;
     display:flex;flex-direction:column;align-items:center;gap:4px;
     text-align:center;
-    /* 单元格清晰边界（最后一行/最右一列去除） */
+    /* 单元格清晰边界：每格带右+下边线，靠 nth 选择器去掉边沿多余线条 */
     border-right:1px solid var(--line);
     border-bottom:1px solid var(--line);
   }
   .tabs button:nth-child(4n){ border-right:none; }
   .tabs button:nth-last-child(-n+4){ border-bottom:none; }
   @media(max-width:560px){
-    .tabs button:nth-child(2n){ border-right:none; }            /* 2列布局：偶数位(2,4,6,8)不画右边界 */
-    .tabs button:nth-last-child(-n+2){ border-bottom:none; }    /* 只有最后一行(7,8)不画下边界；5-6 之间的分割线要保留 */
-    /* sticky 触发后压缩为单行 4 列横滑条：避免占半个屏幕 */
-    .tabs.compact{grid-template-columns:repeat(4,1fr);}
-    .tabs.compact button{padding:7px 4px 6px;}
-    .tabs.compact .tid{font-size:10px;}
-    .tabs.compact .tname{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
-    .tabs.compact .tstat{display:none;}
-    .tabs.compact button:nth-child(2n){border-right:1px solid var(--line);}
-    .tabs.compact button:nth-child(4n){border-right:none;}
-    .tabs.compact button:nth-last-child(-n+4){border-bottom:none;}
+    /* 移动端：1 行 4 列水平滚动（默认就这么紧凑，不依赖 sticky 二次切换） */
+    .tabs{
+      display:grid;
+      grid-template-columns:none;
+      grid-auto-flow:column;
+      grid-auto-columns:calc((100% - 1px) / 4);
+      overflow-x:auto;
+      overflow-y:hidden;
+      scroll-snap-type:x mandatory;
+      -webkit-overflow-scrolling:touch;
+    }
+    .tabs::-webkit-scrollbar{display:none;}
+    .tabs button{
+      scroll-snap-align:start;
+      padding:8px 4px 7px;
+      border-bottom:none;
+    }
+    .tabs button:nth-child(4n){border-right:none;}
+    /* 字号微缩，让一行能塞下四张卡 */
+    .tabs button .tid{font-size:10px;}
+    .tabs button .tname{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.2;}
+    .tabs button .tstat{font-size:10px;}
+    /* 横滑提示：右缘渐隐遮罩 + 雾蓝细箭头（轻呼吸），滑到底自动隐去；回滑出左缘渐隐 */
+    .tabsWrap::after{
+      content:"";position:absolute;top:1px;right:1px;bottom:1px;width:42px;
+      background:linear-gradient(to right,rgba(255,255,255,0),var(--card));
+      border-radius:0 11px 11px 0;pointer-events:none;
+      opacity:0;transition:opacity .25s ease;
+    }
+    .tabsWrap.has-more::after{opacity:1;}
+    .tabsWrap::before{
+      content:"";position:absolute;top:1px;left:1px;bottom:1px;width:30px;
+      background:linear-gradient(to left,rgba(255,255,255,0),var(--card));
+      border-radius:11px 0 0 11px;pointer-events:none;
+      opacity:0;transition:opacity .25s ease;
+    }
+    .tabsWrap.scrolled::before{opacity:1;}
+    .tabHintArrow{display:none;}
+    .tabsWrap.has-more .tabHintArrow{
+      display:block;position:absolute;right:13px;top:50%;width:8px;height:8px;
+      border-top:2px solid var(--blue);border-right:2px solid var(--blue);
+      transform:translateY(-50%) rotate(45deg);pointer-events:none;
+      animation:tabsHint 2.2s ease-in-out infinite;
+    }
   }
+  @keyframes tabsHint{0%,100%{opacity:.3}50%{opacity:.85}}
   .tabs button:hover{ background:rgba(107,140,174,.05); color:var(--blue); }
   .tabs button.on{
     color:var(--blue);font-weight:700;
@@ -328,11 +363,8 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
   .board-tools button.on{background:var(--blue);color:#fff;border-color:var(--blue);}
   .board-tools button:active{background:#eef2f8;}
   body.dark .board-tools button{background:var(--card);color:#cdd6e4;border-color:var(--line);}
-  body.collapseAllDone .mod.done > .body{display:none;}
-  body.collapseAllDone .mod.done > .head{padding:9px 13px;}
-  body.collapseAllDone .mod.done > .head .ttl{font-size:13px;color:var(--green);}
-  body.collapseAllDone .mod.done .chk{padding-left:8px;}
-  body.collapseAllDone .mod.done > .head::after{content:"已完成";font-size:10.5px;color:var(--green);background:#eafaf0;padding:1px 6px;border-radius:9px;margin-left:6px;}
+  /* 已学模块折叠开关（一键隐藏所有 .mod.done 整张卡片，不留头部——视觉变化要够明显） */
+  body.collapseAllDone #board .mod.done{display:none;}
   /* 移动端 header 重排：标题独占一行（之前被 .courseSwitch 170px 硬约束挤压成竖排 4 行），
      课程切换 + 同步按钮另起行；右上角腾出空间给同步图标 */
   @media(max-width:560px){
@@ -449,7 +481,7 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
 
   <div id="authbar" class="authbar"></div>
 
-  <div class="tabs" id="tabs" data-view="board"></div>
+  <div class="tabsWrap" id="tabsWrap"><div class="tabs" id="tabs" data-view="board"></div></div>
   <div id="board" data-view="board"></div>
 
   <section class="block" id="quizSection" data-view="board">
@@ -1607,10 +1639,42 @@ function migrateQbest(){
   if(Object.keys(neu).length){ qbest = neu; saveQbest(); }
   try{ localStorage.setItem(key, "1"); }catch(e){}
 }
+// 章节导航横滑提示：右缘渐隐+箭头提示"还有更多"，滑到底自动消失，回滑出左缘渐隐
+function setupTabsSwipeHint(){
+  const tabs = document.getElementById('tabs');
+  const wrap = document.getElementById('tabsWrap');
+  if(!tabs || !wrap) return;
+  // 箭头提示元素（纯 CSS 图形，非 emoji）
+  const arrow = document.createElement('span');
+  arrow.className = 'tabHintArrow';
+  arrow.setAttribute('aria-hidden','true');
+  wrap.appendChild(arrow);
+  const update = () => {
+    const max = tabs.scrollWidth - tabs.clientWidth;
+    const more = max > 4;                 // 还有没滑出来的内容
+    const atEnd = tabs.scrollLeft >= max - 4;
+    const scrolled = tabs.scrollLeft > 4; // 已离开最左
+    wrap.classList.toggle('has-more', more && !atEnd);
+    wrap.classList.toggle('scrolled', scrolled && more);
+  };
+  tabs.addEventListener('scroll', update, { passive:true });
+  window.addEventListener('resize', update);
+  if('MutationObserver' in window){
+    new MutationObserver(update).observe(tabs, { childList:true }); // 课程/章节重渲染后刷新
+  }
+  update();
+}
+
 function initApp(){
   setCourse(currentCourse);
   switchView("board"); renderStats();
-  setupTabsCompact();
+  setupTabsSwipeHint();
+  // 绑定"收起已完成模块"按钮（之前只声明了函数没绑 click 事件）
+  const tda = document.getElementById('toggleDoneAll');
+  if(tda && !tda.__bound){
+    tda.__bound = true;
+    tda.addEventListener('click', toggleAllDone);
+  }
   // 恢复"收起已完成"偏好 + 实时统计数量
   try{ if(localStorage.getItem('collapseDoneAll')==='1') toggleAllDone(); }catch(e){}
   // 监听模块完成状态变化，实时刷新数量与按钮样式
@@ -1619,21 +1683,6 @@ function initApp(){
     new MutationObserver(refreshDoneCount).observe(board, { subtree:true, attributes:true, attributeFilter:['class'] });
     refreshDoneCount();
   }
-}
-
-// 章节导航栏吸顶后压缩为一行（移动端节省一半屏幕）
-function setupTabsCompact(){
-  const tabs = document.getElementById('tabs');
-  if(!tabs || !('IntersectionObserver' in window)) return;
-  // 在 tabs 上方插入 1px 哨兵：滚出视口 = tabs 进入 sticky 吸顶态
-  const sentinel = document.createElement('div');
-  sentinel.id = 'tabs-sentinel';
-  sentinel.style.cssText = 'height:1px;width:100%;pointer-events:none;';
-  tabs.parentNode.insertBefore(sentinel, tabs);
-  const io = new IntersectionObserver(([e])=>{
-    tabs.classList.toggle('compact', !e.isIntersecting);
-  }, { threshold: 0 });
-  io.observe(sentinel);
 }
 
 // "收起已完成模块"开关 + 完成度实时统计
