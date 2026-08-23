@@ -9,7 +9,7 @@
 body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;--grey:#8a8a9d;--green:#2e9e5b;--lock:#c0392b;--gold:#b8860b;--orange:#e08a1e;}
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,Roboto,sans-serif;background:var(--bg);color:#1f2733;}
-  .app{max-width:920px;margin:0 auto;padding:18px 14px 86px;}
+  .app{max-width:920px;margin:0 auto;padding:18px 14px 86px;overflow-x:clip;}
   /* 宽屏仅加宽容纳量，不让章节模块撑成两列（避免单模块时右侧整片空白） */
   @media(min-width:1024px){
     .app{max-width:1080px;padding:22px 22px 90px;}
@@ -56,50 +56,32 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
   .tabs button:nth-child(4n){ border-right:none; }
   .tabs button:nth-last-child(-n+4){ border-bottom:none; }
   @media(max-width:560px){
-    /* 移动端：1 行 4 列水平滚动（默认就这么紧凑，不依赖 sticky 二次切换） */
+    /* 移动端：4 列 2 行网格，强制全部展开，禁止横向滚动。
+       单格较窄 → 字号缩到最小但仍可读；章节名允许 2 行截断。
+       不再用横滑：根据用户反馈，横滑反而比"小字一眼看完"更难用。 */
     .tabs{
       display:grid;
-      grid-template-columns:none;
-      grid-auto-flow:column;
-      grid-auto-columns:calc((100% - 1px) / 4);
-      overflow-x:auto;
-      overflow-y:hidden;
-      scroll-snap-type:x mandatory;
-      -webkit-overflow-scrolling:touch;
+      grid-template-columns:repeat(4,1fr);
+      grid-template-rows:repeat(2,auto);
+      gap:0;
+      overflow:visible;
     }
     .tabs::-webkit-scrollbar{display:none;}
     .tabs button{
       scroll-snap-align:start;
-      padding:8px 4px 7px;
+      padding:6px 2px 5px;
       border-bottom:none;
     }
     .tabs button:nth-child(4n){border-right:none;}
-    /* 字号微缩，让一行能塞下四张卡 */
-    .tabs button .tid{font-size:10px;}
-    .tabs button .tname{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.2;}
-    .tabs button .tstat{font-size:10px;}
-    /* 横滑提示：右缘渐隐遮罩 + 雾蓝细箭头（轻呼吸），滑到底自动隐去；回滑出左缘渐隐 */
-    .tabsWrap::after{
-      content:"";position:absolute;top:1px;right:1px;bottom:1px;width:42px;
-      background:linear-gradient(to right,rgba(255,255,255,0),var(--card));
-      border-radius:0 11px 11px 0;pointer-events:none;
-      opacity:0;transition:opacity .25s ease;
-    }
-    .tabsWrap.has-more::after{opacity:1;}
-    .tabsWrap::before{
-      content:"";position:absolute;top:1px;left:1px;bottom:1px;width:30px;
-      background:linear-gradient(to left,rgba(255,255,255,0),var(--card));
-      border-radius:11px 0 0 11px;pointer-events:none;
-      opacity:0;transition:opacity .25s ease;
-    }
-    .tabsWrap.scrolled::before{opacity:1;}
-    .tabHintArrow{display:none;}
-    .tabsWrap.has-more .tabHintArrow{
-      display:block;position:absolute;right:13px;top:50%;width:8px;height:8px;
-      border-top:2px solid var(--blue);border-right:2px solid var(--blue);
-      transform:translateY(-50%) rotate(45deg);pointer-events:none;
-      animation:tabsHint 2.2s ease-in-out infinite;
-    }
+    .tabs button:nth-last-child(-n+4){border-bottom:none;}
+    /* 字号微缩，让一格装得下"CH 数字 + 章节名 + 状态" */
+    .tabs button .tid{font-size:9px;}
+    .tabs button .tname{font-size:10.5px;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%;}
+    .tabs button .tstat{font-size:9px;}
+    /* 不要再横滑提示了：彻底关掉伪元素，避免出现误导用户的"右滑箭头" */
+    .tabsWrap::before,.tabsWrap::after{display:none !important;}
+    .tabsWrap.has-more::after,.tabsWrap.scrolled::before{opacity:0 !important;}
+    .tabHintArrow{display:none !important;}
   }
   @keyframes tabsHint{0%,100%{opacity:.3}50%{opacity:.85}}
   .tabs button:hover{ background:rgba(107,140,174,.05); color:var(--blue); }
@@ -288,6 +270,11 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
   .mlink{font-size:12.5px;color:var(--blue);margin-top:10px;}
   .mlink a{cursor:pointer;text-decoration:underline;}
   .mtip{font-size:12px;color:var(--grey);margin-bottom:8px;line-height:1.5;}
+  .mstatus{font-size:13px;margin-top:10px;padding:8px 10px;border-radius:6px;line-height:1.5;word-break:break-all;}
+  .mstatus.info{background:#f0f4fb;color:#33415c;border:1px solid #d6dfee;}
+  .mstatus.warn{background:#fff8e6;color:#8a5a00;border:1px solid #f3e2a4;}
+  .mstatus.error{background:#fdecea;color:#a02d20;border:1px solid #f5c2bd;}
+  .mstatus.ok{background:#e8f5ec;color:#1f6f3e;border:1px solid #b8dec3;}
   .atab{width:100%;border-collapse:collapse;font-size:13px;}
   .atab th,.atab td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top;}
   .atab th{background:#f0f4fb;color:#33415c;}
@@ -365,6 +352,9 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
   body.dark .board-tools button{background:var(--card);color:#cdd6e4;border-color:var(--line);}
   /* 已学模块折叠开关（一键隐藏所有 .mod.done 整张卡片，不留头部——视觉变化要够明显） */
   body.collapseAllDone #board .mod.done{display:none;}
+  /* 首页小节卡片：详细内容统一走「小节独立页」，首页只露卡片头 + 进入箭头，不在首页展开 body */
+  #board .mod .body{display:none !important;}
+  #board .mod .foldbar{display:none;}
   /* 移动端 header 重排：标题独占一行（之前被 .courseSwitch 170px 硬约束挤压成竖排 4 行），
      课程切换 + 同步按钮另起行；右上角腾出空间给同步图标 */
   @media(max-width:560px){
@@ -442,6 +432,31 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
 
   /* ===== 资源优先级标签 ===== */
   .rtag.pri{background:#ffe6a8;color:#8a5a00;margin-right:4px;}
+
+  /* ===== 小节独立页（点小节进入全屏阅读页） ===== */
+  .modPage{position:fixed;inset:0;z-index:80;background:var(--bg);display:none;flex-direction:column;}
+  .modPage.on{display:flex;}
+  body.modpage-open{overflow:hidden;}
+  .modPageBar{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--card);border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(31,56,100,.06);min-height:52px;}
+  .mpBack{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);color:var(--blue);font-size:14px;font-weight:500;padding:8px 14px 8px 11px;border-radius:10px;cursor:pointer;flex:none;}
+  .mpBack i{display:inline-block;width:9px;height:9px;border-left:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-right:2px;}
+  .mpTitle{flex:1;min-width:0;font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mpDone{flex:none;font-size:11px;color:var(--green);background:#eafaf0;border:1px solid #cdeedd;border-radius:9px;padding:2px 8px;margin-left:8px;font-weight:500;}
+  .modPageScroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .modPageInner{max-width:800px;margin:0 auto;padding:16px 14px 90px;}
+  .modPage .mod{display:block !important;border:none;box-shadow:none;background:transparent;}
+  .modPage .mod .head{display:none;}                 /* 页面顶栏已含标题，卡头不重复 */
+  .modPage .mod .body{display:block !important;}      /* 页面态始终展开 */
+  .modPage .mod .foldbar{display:none;}               /* 返回走顶栏按钮 */
+  .mpNextBar{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
+  .mpNextBar .btn{flex:1;min-width:140px;}
+  /* 桌面端：内容居中成阅读栏，两侧留白 */
+  @media(min-width:900px){
+    .modPageInner{padding:28px 24px 110px;}
+    .modPageBar{padding:14px 24px;}
+    .modPageBar .mpTitle{max-width:800px;margin:0 auto;padding-left:0;}
+  }
+  body.dark .modPageBar{box-shadow:none;}
 </style>
 </head>
 <body>
@@ -545,7 +560,8 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
       <div class="setrow"><span>字号</span><div class="seg" id="fsSeg">
         <button data-f="0.88" onclick="setFont(0.88)">小</button>
         <button data-f="1" onclick="setFont(1)">标准</button>
-        <button data-f="1.35" onclick="setFont(1.35)">大</button></div></div>
+        <button data-f="1.35" onclick="setFont(1.35)">大</button>
+        <button data-f="1.75" onclick="setFont(1.75)">特大</button></div></div>
       <div class="setrow" style="flex-wrap:wrap;gap:8px;">
         <span>️ 同步后端地址</span>
         <div style="display:flex;gap:8px;align-items:center;flex:1;min-width:200px;justify-content:flex-end;">
@@ -582,6 +598,15 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
     <button data-v="me" onclick="switchView('me')" aria-label="我的"><svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.3"/><path d="M3.5 17c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/></svg><span>我的</span></button>
   </nav>
 
+  <!-- 小节独立页：点小节进入全屏阅读页，返回回到看板（置于 .app 内以继承字号 zoom） -->
+  <div class="modPage" id="modPage" aria-hidden="true">
+    <div class="modPageBar">
+      <button class="mpBack" onclick="closeModPage()" aria-label="返回看板"><i></i>返回</button>
+      <div class="mpTitle" id="mpTitle"></div>
+    </div>
+    <div class="modPageScroll" id="modPageScroll"><div class="modPageInner" id="modPageBody"></div></div>
+  </div>
+
 </div>
 
 <!-- 登录弹窗 -->
@@ -590,8 +615,9 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
     <h3>登录</h3>
     <input class="fld" id="li_user" placeholder="用户名">
     <div class="pw-wrap"><input class="fld" id="li_pw" type="password" placeholder="密码"><button type="button" class="pw-eye" title="显示密码" onclick="togglePw('li_pw', this)">️</button></div>
-    <div class="mbtns"><button class="btn blue" onclick="doLogin()">登录</button>
+    <div class="mbtns"><button class="btn blue" id="li_btn" onclick="doLogin()">登录</button>
       <button class="btn ghost" onclick="hideModal('loginModal')">取消</button></div>
+    <div class="mstatus" id="li_status" hidden></div>
     <div class="mlink"><a onclick="hideModal('loginModal');showModal('regModal')">没有账号？去注册</a>
       · <a onclick="hideModal('loginModal');showModal('forgotModal')">忘记密码？</a></div>
     <div class="mtip">本设备会记住你的账号密码（仅存于本机浏览器），下次打开自动登录，无需手动输入。</div>
@@ -606,8 +632,9 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
     <input class="fld" id="rg_q" placeholder="找回密码的问题（如：我小学名字？）">
     <input class="fld" id="rg_a" placeholder="找回密码的答案">
     <div class="mtip">提示：注册时会让你填一个「找回密码的问题」。忘记密码时，回答它即可重置，无需邮箱。</div>
-    <div class="mbtns"><button class="btn blue" onclick="doRegister()">注册并登录</button>
+    <div class="mbtns"><button class="btn blue" id="rg_btn" onclick="doRegister()">注册并登录</button>
       <button class="btn ghost" onclick="hideModal('regModal')">取消</button></div>
+    <div class="mstatus" id="rg_status" hidden></div>
     <div class="mlink"><a onclick="hideModal('regModal');showModal('loginModal')">已有账号？去登录</a></div>
   </div>
 </div>
@@ -941,6 +968,86 @@ function gradeModuleQuiz(id){
   }
 }
 
+// ---------- 小节独立页：点小节进入独立阅读页，返回回到看板 ----------
+let modPageId = null;      // 当前打开的小节 id；null = 未打开
+let modPagePushed = false; // 是否已 push 历史记录（配合浏览器返回键）
+function lockTip(){ alert('先完成上一个模块并通过「本小节测验」，本小节会自动解锁。'); }
+
+function openModPage(id){
+  const task = DATA.tasks.find(t=>t.id===id);
+  if(!task) return;
+  if(!moduleUnlocked(task)){ lockTip(); return; }
+  const alreadyOpen = modPageId !== null;
+  modPageId = id;
+  moduleOpen[id] = true;
+  const st = DATA.stages.find(s=>s.name===task.stage);
+  if(st) chapterOpen[st.id] = true;
+  switchView("board");
+  renderTabs(); renderStages(current);   // renderStages 末尾会自动把小节挂进独立页
+  const pg = document.getElementById("modPage");
+  if(!alreadyOpen){
+    pg.classList.add("on"); pg.setAttribute("aria-hidden","false");
+    document.body.classList.add("modpage-open");
+    history.pushState({mod:id}, "", "#mod-"+id);
+    modPagePushed = true;
+  } else if(modPagePushed){
+    history.replaceState({mod:id}, "", "#mod-"+id);
+  }
+  document.getElementById("modPageScroll").scrollTop = 0;
+}
+
+// 把最新渲染的小节卡挂进独立页（renderStages 之后调用，保证单一数据源）
+function mountModPage(){
+  if(modPageId === null) return;
+  const host = document.getElementById("modPageBody");
+  const el = document.querySelector('#board .mod[data-id="'+modPageId+'"]');
+  if(!el || !host) return;
+  host.innerHTML = "";
+  host.appendChild(el);
+  const t = DATA.tasks.find(x=>x.id===modPageId);
+  if(!t) return;
+  const st = DATA.stages.find(s=>s.name===t.stage);
+  const idx = tasksOfStage(t.stage).findIndex(x=>x.id===modPageId) + 1;
+  const title = (st ? "CH "+String(st.id).padStart(2,"0")+" · " : "") + "第"+idx+"节 " + esc(t.title);
+  document.getElementById("mpTitle").innerHTML = title + (done[modPageId] ? '<span class="mpDone">已完成</span>' : '');
+  // 已通过的小节：页底加「下一节」快捷入口
+  if(done[modPageId]){
+    const list = DATA.tasks.filter(x=>x.stage===t.stage);
+    const next = list[list.findIndex(x=>x.id===modPageId)+1];
+    if(next){
+      const bar = document.createElement("div");
+      bar.className = "mpNextBar";
+      const nb = document.createElement("button");
+      nb.className = "btn blue";
+      nb.textContent = "下一节 · "+next.title;
+      nb.onclick = ()=>openModPage(next.id);
+      bar.appendChild(nb);
+      host.appendChild(bar);
+    }
+  }
+}
+
+function closeModPage(fromPop){
+  if(modPageId === null) return;
+  const id = modPageId;
+  modPageId = null;
+  // 清掉首页内联展开状态：详细内容已迁到独立页面，moduleOpen[id] 不再用于首页展开
+  if(typeof moduleOpen === "object" && moduleOpen) moduleOpen[id] = false;
+  const pg = document.getElementById("modPage");
+  pg.classList.remove("on"); pg.setAttribute("aria-hidden","true");
+  document.body.classList.remove("modpage-open");
+  document.getElementById("modPageBody").innerHTML = "";
+  renderStages(current);
+  if(modPagePushed){
+    modPagePushed = false;
+    if(!fromPop) history.back();          // 触发 popstate，幂等返回
+  }
+  // 返回后让刚看的小节在列表里可见
+  const card = document.querySelector('.mod[data-id="'+id+'"]');
+  if(card && card.scrollIntoView) setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"center"}), 60);
+}
+window.addEventListener("popstate", ()=>{ if(modPageId !== null) closeModPage(true); });
+
 // ---------- 模块卡片 ----------
 // secNum = 本章内第几小节（1 起）；是否展开由 moduleOpen 状态决定（不再级联展开下一节）
 function renderModule(task, secNum){
@@ -949,16 +1056,16 @@ function renderModule(task, secNum){
   const unlocked = moduleUnlocked(task);
   const mOpen = !!moduleOpen[id];
   if(!unlocked){
-    return '<div class="mod locked" data-id="'+id+'"><div class="head" onclick="toggleMod('+id+')">'
-      + '<div class="idx">'+secNum+'</div><div class="ttl">'+esc(task.title)+'</div><span class="arrow">收起</span></div>'
+    return '<div class="mod locked" data-id="'+id+'"><div class="head" onclick="lockTip()">'
+      + '<div class="idx">'+secNum+'</div><div class="ttl">'+esc(task.title)+'</div><span class="arrow">未解锁</span></div>'
       + '<div class="body" id="body'+id+'" style="display:none">完成上一个模块并通过小测后自动解锁。'+(task.summary?'<div style="margin-top:8px">本小节重点：'+esc(task.summary)+'</div>':'')+'</div></div>';
   }
-  const head = '<div class="head" onclick="toggleMod('+id+')">'
+  const head = '<div class="head" onclick="openModPage('+id+')">'
     + '<div class="idx'+(isd?' done':'')+'">'+secNum+'</div>'
     + '<div class="ttl">'+esc(task.title)+'</div>'
     + '<span class="tg">'+esc(task.type)+'</span>'
     + (isd?'<span class="chk">已完成</span>':'')
-    + '<span class="arrow">'+(mOpen?'展开':'收起')+'</span></div>';
+    + '<span class="arrow">进入 ›</span></div>';
   let sec = '<div class="sec sum"><span class="lab">本小节重点</span><br>'+esc(task.summary||task.note||"")+'</div>';
   if(task.terms && task.terms.length){
     sec += '<div class="sec terms"><span class="lab">专业名词解释</span>'
@@ -992,8 +1099,9 @@ function renderModule(task, secNum){
     quizArea = '<div class="mqstatus"><button class="btn ok" onclick="startModuleQuiz('+id+')">开始本小节测验（全对才解锁下一节）</button></div>'
       + '<div class="quizbox" id="quizbox'+id+'" style="display:none"></div>';
   }
-  const bodyDisplay = mOpen ? '' : 'style="display:none"';
-  const foldBar = '<div class="foldbar"><button class="btn ghost sm" onclick="toggleMod('+id+')">▲ 收起本节</button></div>';
+  // 首页小节卡 body 永远不展开（详细内容走独立页）；display:none 由 CSS 兜底
+  const bodyDisplay = 'style="display:none"';
+  const foldBar = '<div class="foldbar"><button class="btn ghost sm" onclick="closeModPage()">▲ 返回看板</button></div>';
   return '<div class="mod '+(isd?'done':'')+'" data-id="'+id+'">'+head+'<div class="body" id="body'+id+'" '+bodyDisplay+'>'+sec+quizArea+foldBar+'</div></div>';
 }
 
@@ -1034,6 +1142,7 @@ function renderStages(filter){
     html += '</div></div>';
     board.insertAdjacentHTML("beforeend", html);
   });
+  if(modPageId !== null) mountModPage();   // 小节页打开中：重渲染后自动把最新小节挂回去
   updateCTA();
 }
 
@@ -1096,7 +1205,22 @@ function applyTheme(t){
   const seg=document.getElementById("themeSeg"); if(seg) seg.querySelectorAll("button").forEach(b=>b.classList.toggle("on", b.dataset.t===th));
 }
 function setTheme(t){ applyTheme(t); }
-function applyFont(f){ if(f) localStorage.setItem(KEY_FS,String(f)); const fs=parseFloat(localStorage.getItem(KEY_FS)||"1"); const app=document.querySelector(".app"); if(app) app.style.zoom=fs; const seg=document.getElementById("fsSeg"); if(seg) seg.querySelectorAll("button").forEach(b=>b.classList.toggle("on", parseFloat(b.dataset.f)===fs)); }
+function applyFont(f){ if(f) localStorage.setItem(KEY_FS,String(f)); const fs=parseFloat(localStorage.getItem(KEY_FS)||"1"); const app=document.querySelector(".app");
+  if(app){
+    // 先清掉上次的内联补偿，再读样式表里的"自然"值，避免重复调用越除越小
+    app.style.zoom=""; app.style.width=""; app.style.maxWidth="";
+    if(fs!==1){
+      // Chrome 的 CSS zoom 会把容器渲染宽度放大 fs 倍导致右半屏溢出，
+      // 因此同步把宽度/最大宽度除回 fs，保证"字变大、版面不变宽"
+      const mw = parseFloat(getComputedStyle(app).maxWidth);
+      app.style.zoom=fs;
+      app.style.width=(100/fs)+"%";
+      app.style.maxWidth=(isFinite(mw)?mw/fs:920/fs)+"px";
+    }
+  }
+  // 跨 1024px 断点时 max-width 变化(920↔1080)，重算补偿
+  if(!applyFont.__rs){ applyFont.__rs=true; window.addEventListener("resize",()=>{ if(parseFloat(localStorage.getItem(KEY_FS)||"1")!==1) applyFont(); }); }
+  const seg=document.getElementById("fsSeg"); if(seg) seg.querySelectorAll("button").forEach(b=>b.classList.toggle("on", parseFloat(b.dataset.f)===fs)); }
 function setFont(f){ applyFont(f); }
 function ymd(d){ d=d||new Date(); const z=n=>String(n).padStart(2,"0"); return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate()); }
 function daysBetween(a,b){ return Math.round((b-a)/86400000); }
@@ -1128,8 +1252,8 @@ function switchView(v){
 }
 function firstPending(){ for(const t of DATA.tasks){ if(!done[t.id] && moduleUnlocked(t)) return t; } for(const t of DATA.tasks){ if(!done[t.id]) return t; } return null; }
 function updateCTA(){ const fp=firstPending(); const ce=document.getElementById("ctaSec"); if(ce && fp){ const idx=tasksOfStage(fp.stage).findIndex(x=>x.id===fp.id)+1; ce.textContent=idx; } }
-function continueLearning(){ const t=firstPending(); if(!t){ alert("全部小节已完成！可去做章节自测挑战。"); return; } const sid=stageIdByName(t.stage); chapterOpen[sid]=true; moduleOpen[t.id]=true; initUIState(); switchView("board"); renderTabs(); renderStages(current); openMod(t.id);   const b=document.getElementById("body"+t.id); if(b && b.scrollIntoView) b.scrollIntoView({behavior:"smooth",block:"center"}); }
-function gotoReview(id,sid){ chapterOpen[sid]=true; moduleOpen[id]=true; initUIState(); switchView("board"); renderTabs(); renderStages(current); openMod(id); if(done[id]) reviewModuleQuiz(id); const b=document.getElementById("body"+id); if(b && b.scrollIntoView) b.scrollIntoView({behavior:"smooth",block:"center"}); REVIEW[id]=Date.now(); saveReview(); }
+function continueLearning(){ const t=firstPending(); if(!t){ alert("全部小节已完成！可去做章节自测挑战。"); return; } const sid=stageIdByName(t.stage); chapterOpen[sid]=true; moduleOpen[t.id]=true; initUIState(); switchView("board"); renderTabs(); renderStages(current); openModPage(t.id); }
+function gotoReview(id,sid){ chapterOpen[sid]=true; moduleOpen[id]=true; initUIState(); switchView("board"); renderTabs(); renderStages(current); openModPage(id); REVIEW[id]=Date.now(); saveReview(); }
 function card(num,lab){ return '<div class="scard"><div class="num">'+num+'</div><div class="lab">'+lab+'</div></div>'; }
 function renderStats(){
   const total=DATA.tasks.length; const d=DATA.tasks.filter(t=>done[t.id]).length; const pct=total?Math.round(d/total*100):0;
@@ -1300,7 +1424,26 @@ async function apiReq(path, method, body){
   let tk = null; try { tk = localStorage.getItem("API_TOKEN"); } catch(e){}
   if(tk) opt.headers["Authorization"] = "Bearer " + tk;   // 跨域：用 Bearer 头携带登录令牌（Cookie 跨域不生效）
   if(body !== undefined){ opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
-  const r = await fetch(API_BASE + path, opt);
+  // 硬超时：免费 Render 睡眠后唤醒要 30-60s，再加上网络抖动，60s 到没返回就视为失败
+  const ctl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+  if(ctl) opt.signal = ctl.signal;
+  const timer = ctl ? setTimeout(()=>{ try{ ctl.abort(); }catch(e){} }, 60000) : null;
+  let r;
+  try { r = await fetch(API_BASE + path, opt); }
+  catch(e){
+    if(timer) clearTimeout(timer);
+    const raw = (e && e.message) || "网络错误";
+    const isAbort = e && (e.name === "AbortError" || /abort/i.test(raw));
+    let msg;
+    if(isAbort){
+      msg = "⏱ 请求超时（60 秒没收到响应）。\n可能原因：\n  ① 当前网络过慢 / 不稳；\n  ② 后端在 Render 免费档上睡着了——它会休眠，唤醒需 30-60 秒，请稍等再试一次；\n  ③ 后端地址填错，DNS 解析后永远拿不到响应。";
+    } else {
+      // "Failed to fetch" / "NetworkError" / "Load failed" 等都是浏览器层网络错误，根本没连到服务器
+      msg = "❌ 连不上服务器（浏览器网络层报错：" + raw + "）。\n这不是服务器慢，是根本没连上。可能原因：\n  ① 当前网络无法访问该域名（海外服务在国内可能连接失败，需自备代理；\n     或公司/校园网/防火墙封锁）；\n  ② 同步后端地址填错了：检查末尾是否带空格或多余路径；\n  ③ 浏览器拦截：CORS / AdBlock / 隐私模式 / VPN 异常都可能；\n  ④ 服务器真实离线（Render 免费档可能因不活跃被回收）。\n👉 临时绕开：先点取消用『离线模式』，等网络顺畅再来同步。";
+    }
+    return { status: 0, data: { ok:false, msg } };
+  }
+  if(timer) clearTimeout(timer);
   let data = {}; try { data = await r.json(); } catch(e){}
   return { status: r.status, data };
 }
@@ -1384,23 +1527,52 @@ function renderAuthBar(){
   }
 }
 function togglePw(id, btn){var el=document.getElementById(id);if(!el)return;if(el.type==="password"){el.type="text";btn.textContent="";btn.title="隐藏密码";}else{el.type="password";btn.textContent="️";btn.title="显示密码";}}
-function showModal(id){ const m = document.getElementById(id); if(m) m.style.display = "flex"; }
+function showModal(id){ const m = document.getElementById(id); if(m) m.style.display = "flex";
+  // 打开弹窗时清掉上一次的状态行和按钮 busy 态（防上次超时按钮还卡着 disabled）
+  if(id === "loginModal"){ setStatus("li_status", null); const b=document.getElementById("li_btn"); if(b&&b.dataset.orig){b.textContent=b.dataset.orig;delete b.dataset.orig;} b.disabled=false; }
+  if(id === "regModal"){ setStatus("rg_status", null); const b=document.getElementById("rg_btn"); if(b&&b.dataset.orig){b.textContent=b.dataset.orig;delete b.dataset.orig;} b.disabled=false; }
+}
 function hideModal(id){ const m = document.getElementById(id); if(m) m.style.display = "none"; }
 
+// 请求期间把按钮变 loading 态（文字+禁用），避免免费服务器冷启动 30-60 秒里用户以为"点了没反应"
+function setBtnBusy(id, busy, text){
+  const b = document.getElementById(id); if(!b) return;
+  if(busy){
+    if(!b.dataset.orig) b.dataset.orig = b.textContent;   // 先存原文再改字，顺序不能反
+    b.disabled = true; b.textContent = text;
+  } else {
+    b.disabled = false;
+    if(b.dataset.orig){ b.textContent = b.dataset.orig; delete b.dataset.orig; }
+  }
+}
+// 在弹窗里显示一行过程文字（info=蓝/warn=黄/error=红/ok=绿），比 alert 更友好——尤其在"长时间没反应"时给出进度可见性
+function setStatus(id, msg, kind){
+  const el = document.getElementById(id); if(!el) return;
+  if(!msg){ el.hidden = true; el.textContent = ""; el.className = "mstatus"; return; }
+  el.hidden = false; el.textContent = msg; el.className = "mstatus " + (kind || "info");
+}
 async function doLogin(){
   if(!API_BASE && !SAME_ORIGIN_OK){ alert("你还没有设置『同步后端地址』。\n请先到「️ 我的/设置 → ️ 同步后端地址」填写（部署后端后）；或直接使用离线模式（进度仅存本机）。"); return; }
   const username = document.getElementById("li_user").value.trim();
   const password = document.getElementById("li_pw").value;
   if(!username || !password){ alert("请输入用户名和密码"); return; }
+  setBtnBusy("li_btn", true, "登录中…");
+  setStatus("li_status", "正在连接 " + API_BASE + "（免费服务器休眠后唤醒可能要 30-60 秒，请稍候…）", "info");
   const r = await apiReq("/api/login", "POST", { username, password });
+  setBtnBusy("li_btn", false);
   if(r.status === 200 && r.data.ok){
+    setStatus("li_status", "✓ 登录成功，正在拉取云端进度…", "ok");
     api.online = true; api.user = { username: r.data.username, role: r.data.role };
     storeCreds(username, password);
     try { localStorage.setItem("API_TOKEN", r.data.token || ""); } catch(e){}
     const pr = await apiReq("/api/progress", "GET"); if(pr.status === 200) applyProgress(pr.data);
-    hideModal("loginModal"); renderAuthBar(); initUIState(); renderStages(current);
+    hideModal("loginModal"); setStatus("li_status", null); renderAuthBar(); initUIState(); renderStages(current);
     if(r.data.role === "admin") alert("登录成功！你是管理员，可点『管理后台』查看所有用户进度。");
-  } else { alert((r.data && r.data.msg) || "登录失败"); }
+  } else {
+    const msg = (r.data && r.data.msg) || ("登录失败（HTTP " + r.status + "）");
+    setStatus("li_status", "❌ " + msg + "\n可换一台网络/换浏览器/清缓存再试；如反复失败请到 GitHub issue 反馈。", "error");
+    alert(msg);
+  }
 }
 async function doRegister(){
   if(!API_BASE && !SAME_ORIGIN_OK){ alert("你还没有设置『同步后端地址』。\n请先到「️ 我的/设置 → ️ 同步后端地址」填写（部署后端后）；或直接使用离线模式（进度仅存本机）。"); return; }
@@ -1408,15 +1580,23 @@ async function doRegister(){
   const password = document.getElementById("rg_pw").value;
   const secQ = document.getElementById("rg_q").value.trim();
   const secA = document.getElementById("rg_a").value.trim();
+  setBtnBusy("rg_btn", true, "注册中…");
+  setStatus("rg_status", "正在连接 " + API_BASE + "（请稍候…）", "info");
   const r = await apiReq("/api/register", "POST", { username, password, secQ, secA });
+  setBtnBusy("rg_btn", false);
   if(r.status === 200 && r.data.ok){
+    setStatus("rg_status", "✓ 注册成功，正在登录…", "ok");
     api.online = true; api.user = { username: r.data.username, role: r.data.role };
     storeCreds(username, password, secQ, secA);
     try { localStorage.setItem("API_TOKEN", r.data.token || ""); } catch(e){}
-    hideModal("regModal"); renderAuthBar();
+    hideModal("regModal"); setStatus("rg_status", null); renderAuthBar();
     if(r.data.firstAdmin) alert("注册成功！你是首个用户，已自动成为管理员，可管理所有用户进度。");
     else alert("注册成功，已登录！");
-  } else { alert((r.data && r.data.msg) || "注册失败"); }
+  } else {
+    const msg = (r.data && r.data.msg) || ("注册失败（HTTP " + r.status + "）");
+    setStatus("rg_status", "❌ " + msg, "error");
+    alert(msg);
+  }
 }
 async function doLogout(){
   await apiReq("/api/logout", "POST");
@@ -1683,11 +1863,19 @@ function initApp(){
     new MutationObserver(refreshDoneCount).observe(board, { subtree:true, attributes:true, attributeFilter:['class'] });
     refreshDoneCount();
   }
+  // 支持 #mod-N 直达链接（刷新/分享后直接打开对应小节页）
+  const m = /^#mod-(\d+)$/.exec(location.hash);
+  if(m){
+    const id = parseInt(m[1],10);
+    const t = DATA.tasks.find(x=>x.id===id);
+    history.replaceState(null,'','#');        // 先清掉 hash，由 openModPage 统一 push
+    if(t && moduleUnlocked(t)) openModPage(id);
+  }
 }
 
 // "收起已完成模块"开关 + 完成度实时统计
 function refreshDoneCount(){
-  const list = document.querySelectorAll('#board .mod.done');
+  const list = document.querySelectorAll('#board .mod.done, #modPageBody .mod.done');
   const el = document.getElementById('tdCount');
   if(el) el.textContent = '(' + list.length + ')';
   const btn = document.getElementById('toggleDoneAll');
