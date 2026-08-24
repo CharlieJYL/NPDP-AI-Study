@@ -169,6 +169,14 @@
   var done = {};
   try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
 
+  /* 阶段展开/收起：默认全部收起；用户手动展开过的阶段记到 localStorage，刷新后仍保持 */
+  var OKEY = "study_pub_open";
+  var stageOpen = {};
+  try { stageOpen = JSON.parse(localStorage.getItem(OKEY) || "{}") || {}; } catch (e) { stageOpen = {}; }
+  function saveOpen() {
+    try { localStorage.setItem(OKEY, JSON.stringify(stageOpen)); } catch (e) {}
+  }
+
   function cnNum(n) {
     n = parseInt(n, 10) || 0;
     var d = ["零","一","二","三","四","五","六","七","八","九"];
@@ -190,11 +198,19 @@
 
   function render() {
     var wrap = document.getElementById("stages");
+    /* 重渲染前先记住当前各阶段的展开状态，避免勾选一项后全部收起 */
+    var prev = wrap.querySelectorAll("details.stage");
+    if (prev.length) {
+      for (var pi = 0; pi < prev.length && pi < DATA.stages.length; pi++) {
+        stageOpen[DATA.stages[pi].id] = prev[pi].open;
+      }
+      saveOpen();
+    }
     var html = "";
     DATA.stages.forEach(function (s) {
       var total = s.tasks.length;
       var cnt = s.tasks.filter(function (t) { return done[t.id]; }).length;
-      html += '<details class="stage" open>'
+      html += '<details class="stage" data-stage="' + s.id + '"' + (stageOpen[s.id] ? " open" : "") + '>'
         + '<summary>'
         + '<span class="snum">第' + cnNum(s.id) + '阶段</span>'
         + '<span class="stx"><b>' + esc(s.name) + '</b>'
@@ -253,6 +269,14 @@
   }
 
   render();
+  /* 展开状态持久化：toggle 事件不冒泡，用捕获模式监听 */
+  document.getElementById("stages").addEventListener("toggle", function (e) {
+    var d = e.target;
+    if (d && d.classList && d.classList.contains("stage")) {
+      stageOpen[d.getAttribute("data-stage")] = d.open;
+      saveOpen();
+    }
+  }, true);
   (function () {
     try {
       var s = localStorage.getItem("study_fs");
