@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI 学习路线 · 轻量看板</title>
+<style>
+  :root{
+    --bg:#F6F8FB; --surface:#FFFFFF;
+    --brand:#6B8CAE; --brand2:#4E7295; --brand-soft:#EDF2F7; --brand-line:#CFDCE8;
+    --ink:#2B3640; --muted:#7A8696; --line:#E5EAEF;
+    --good:#5B9E7F; --good-soft:#EFF6F2;
+    --shadow:0 4px 20px rgba(43,54,64,.05);
+    --r:20px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.8;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{transition:zoom .15s ease}
+
+  .topbar{
+    position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:14px;
+    padding:10px 20px; background:rgba(246,248,251,.92);
+    backdrop-filter:saturate(180%) blur(12px); border-bottom:1px solid var(--line);
+  }
+  .brand{font-weight:700; letter-spacing:.3px; color:var(--brand2); font-size:16px; white-space:nowrap}
+  .brand small{display:block; font-weight:400; color:var(--muted); font-size:11px; letter-spacing:0}
+  .spacer{flex:1}
+  .backlink{color:var(--brand); text-decoration:none; font-size:13.5px; font-weight:600; white-space:nowrap}
+  .backlink:hover{color:var(--brand2)}
+  .fs{display:flex; align-items:center; gap:5px}
+  .fs span{color:var(--muted); font-size:12px; margin-right:2px}
+  .fs button{border:1px solid var(--line); background:#fff; color:var(--muted); cursor:pointer;
+    padding:5px 11px; border-radius:8px; font-size:13px; transition:.15s}
+  .fs button:hover{border-color:var(--brand-line); color:var(--brand)}
+  .fs button.on{background:var(--brand); border-color:var(--brand); color:#fff; font-weight:600}
+  @media(max-width:640px){.fs span{display:none}}
+
+  main{max-width:760px; margin:0 auto; padding:24px 20px 90px}
+
+  .hero{padding:36px 4px 0}
+  .kicker{display:inline-block; font-size:12px; font-weight:600; color:var(--brand2);
+    letter-spacing:1.5px; margin-bottom:16px}
+  .hero h1{font-size:32px; line-height:1.3; margin:0 0 12px; font-weight:700; letter-spacing:-.5px}
+  .hero h1 em{font-style:normal; color:var(--brand)}
+  .hero .sub{color:var(--muted); font-size:15.5px; max-width:560px; margin:0; line-height:1.75}
+  @media(max-width:640px){.hero{padding:20px 4px 0} .hero h1{font-size:26px}}
+
+  /* 总进度卡 */
+  .pcard{background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+    padding:24px 26px; box-shadow:var(--shadow); margin-top:28px}
+  .prow{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap}
+  .pnum{font-size:44px; font-weight:300; color:var(--brand); line-height:1; letter-spacing:-1px}
+  .pnum b{font-size:18px; font-weight:400; color:var(--muted); letter-spacing:0}
+  .plabel{color:var(--muted); font-size:13.5px}
+  .pbar{height:6px; background:var(--brand-soft); border-radius:99px; margin-top:16px; overflow:hidden}
+  .pbar i{display:block; height:100%; width:0; background:var(--brand); border-radius:99px;
+    transition:width .4s ease}
+  .pmeta{display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:8px}
+  .pmeta .ptip{color:var(--muted); font-size:12.5px}
+  .reset{border:none; background:transparent; color:var(--muted); font-size:12.5px; cursor:pointer;
+    text-decoration:underline dotted; padding:2px 4px}
+  .reset:hover{color:#BE7268}
+
+  /* 阶段 */
+  .stage{margin-top:22px; background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden}
+  .stage summary{list-style:none; cursor:pointer; padding:20px 24px; display:flex;
+    align-items:center; gap:14px; transition:background .15s}
+  .stage summary::-webkit-details-marker{display:none}
+  .stage summary:hover{background:var(--brand-soft)}
+  .snum{font-size:14px; font-weight:600; color:var(--brand); white-space:nowrap; letter-spacing:.5px}
+  .stx{flex:1; min-width:0}
+  .stx b{display:block; font-size:17px; font-weight:700; color:var(--ink)}
+  .stx small{display:block; color:var(--muted); font-size:12.5px; margin-top:2px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .scount{font-size:13px; color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums}
+  .scount b{color:var(--brand2); font-weight:700}
+  .schev{flex:none; width:22px; height:22px; color:var(--brand); opacity:.55; transition:transform .2s}
+  .stage[open] .schev{transform:rotate(180deg)}
+  .sbar{height:4px; background:var(--brand-soft)}
+  .sbar i{display:block; height:100%; width:0; background:var(--brand); transition:width .35s ease}
+  .sbody{padding:6px 24px 18px}
+
+  /* 任务行 */
+  .task{display:flex; gap:14px; padding:15px 2px; border-bottom:1px solid var(--line); cursor:pointer}
+  .task:last-child{border-bottom:none}
+  .task:hover .tt{color:var(--brand2)}
+  .cbx{flex:none; width:22px; height:22px; margin-top:3px; border:1.5px solid var(--brand-line);
+    border-radius:50%; background:#fff; cursor:pointer; transition:.15s; display:flex;
+    align-items:center; justify-content:center; padding:0; color:#fff}
+  .cbx:hover{border-color:var(--brand)}
+  .cbx svg{width:12px; height:12px; opacity:0; transition:.15s}
+  .task.done .cbx{background:var(--good); border-color:var(--good)}
+  .task.done .cbx svg{opacity:1}
+  .tx{flex:1; min-width:0}
+  .tt{font-size:15px; font-weight:600; color:var(--ink); transition:.15s; text-wrap:pretty}
+  .task.done .tt{color:var(--muted); text-decoration:line-through;
+    text-decoration-color:rgba(122,134,150,.5); text-decoration-thickness:1px}
+  .tmeta{color:var(--muted); font-size:12.5px; margin-top:2px}
+  .tmeta .dot{margin:0 6px; opacity:.6}
+  .tsum{color:var(--muted); font-size:13.5px; line-height:1.7; margin:8px 0 0; text-wrap:pretty}
+  .tnote{display:inline-block; margin-top:8px; font-size:12px; color:var(--brand2);
+    background:var(--brand-soft); border-radius:7px; padding:3px 10px}
+  @media(max-width:640px){
+    .stage summary{padding:16px 18px}
+    .sbody{padding:4px 18px 14px}
+    .pcard{padding:20px 18px}
+    .snum{display:none}
+  }
+
+  .foot{margin-top:34px; text-align:center; color:var(--muted); font-size:13px}
+  .foot a{color:var(--brand); font-weight:600; text-decoration:none}
+  .foot a:hover{color:var(--brand2)}
+
+  button:focus-visible, summary:focus-visible, a:focus-visible{outline:2px solid var(--brand);
+    outline-offset:2px; border-radius:8px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand">AI 学习路线<small>轻量看板 · 进度存本机浏览器</small></div>
+    <div class="spacer"></div>
+    <a class="backlink" href="intro.html">← AI 小百科</a>
+    <div class="fs">
+      <span>字号</span>
+      <button data-fs="0.85" onclick="setFont(0.85,this)">小</button>
+      <button data-fs="1" onclick="setFont(1,this)" class="on">标准</button>
+      <button data-fs="1.3" onclick="setFont(1.3,this)">大</button>
+      <button data-fs="1.65" onclick="setFont(1.65,this)">特大</button>
+    </div>
+  </div>
+
+  <main>
+    <div class="hero">
+      <span class="kicker">零基础 · 每天 1 小时</span>
+      <h1>AI 学习路线，<br>学到哪、<em>勾到哪</em></h1>
+      <p class="sub">76 项任务分成 8 个阶段，从"搞懂 AI 是什么"一路走到"独立做出 AI 小产品"。每项下面都有一段通俗的重点讲解，看完勾掉就算过关。不用注册，进度自动存在你自己的浏览器里。</p>
+    </div>
+
+    <div class="pcard">
+      <div class="prow">
+        <span class="pnum"><span id="pct">0</span><b>%</b></span>
+        <span class="plabel">总进度 · 已完成 <b id="pdone">0</b> / 76 项</span>
+      </div>
+      <div class="pbar"><i id="pbar"></i></div>
+      <div class="pmeta">
+        <span class="ptip">勾选即时保存，换设备进度不互通（各看各的）</span>
+        <button class="reset" onclick="resetAll()">重置我的进度</button>
+      </div>
+    </div>
+
+    <div id="stages"></div>
+
+    <div class="foot">
+      看完想了解这些词都是什么意思？<a href="intro.html">回到 AI 小百科 →</a>
+    </div>
+  </main>
+</div>
+
+<script>
+  var DATA = {"stages":[{"id":1,"name":"AI认知与工具熟练","goal":"搞懂 AI 是什么、会用主流工具提效","month":1,"tasks":[{"id":1,"week":"1","title":"用大白话搞懂 AI / 机器学习 / 深度学习 / 大模型 的区别","type":"认知","hours":3,"note":"画一张概念关系图","summary":"这节要把五个容易混的词理出『两层关系』。先定大小：最外圈『AI（人工智能）』是『让机器变聪明』的总目标，不是某一种技术；为了实现它，人们搞出『机器学习』——不写死规则、让机器自己从例子里找规律的方法。注意：『神经网络』本身就是机器学习里的一类模型（模仿脑神经结构搭的），它层数堆多了就叫『深度学习』；『大模型（大语言模型）』是深度学习里用海量文字训出来、最擅长聊天写字的那个分支。所以第一层大小关系是：AI ⊃ 机器学习 ⊃（以神经网络为代表）⊃ 深度学习 ⊃ 大模型。但机器学习还有第二层切分——按『怎么学』分三派：『监督学习』有标准答案可对照、『无监督学习』没答案靠自己找结构、『强化学习』靠试错+奖励学策略（这块第 33 节细讲）。一句话：神经网络/深度学习是『模型长什么样』，监督/无监督/强化是『靠什么方式学』，两个维度拼起来才是完整的机器学习地图。"},{"id":2,"week":"2","title":"理解『生成式AI』能做什么、不能做什么","type":"认知","hours":2,"note":"列 3 个误区","summary":"这节先按『AI 到底干哪类活』给它分两类：『生成式』负责凭空造出新东西（写文章、画图），『判别式』只负责做判断和分类（这是猫还是狗、是不是垃圾邮件）。分完类再看生成式的致命短板——『幻觉』：因为它本质是『接着往下编』，所以会一本正经地胡说。逻辑是：能创造 ≠ 能负责，越爱生成的越容易编，所以关键事实必须你自己核实。"},{"id":3,"week":"3","title":"每天用 ChatGPT/豆包 完成 1 个真实工作任务（累计）","type":"工具","hours":10,"note":"记录 10 次使用场景","summary":"这节不学新名词，而是逼你连续几天真的把 AI 当同事使——写邮件、做总结、翻英文。目的只有一个：在反复使用里长出直觉——哪些活它擅长、哪些活必须你把关。而让这种日常协作能复用、能沉淀的两个抓手，就是『提示词』（你怎么跟它说）和『工作流』（把步骤串起来让 AI 当其中一环）。关系是：先用起来 → 才有体感 → 提示词和工作流把体感变成可复用的动作。"},{"id":4,"week":"4","title":"学会写清楚 Prompt：角色+任务+格式+示例","type":"工具","hours":3,"note":"沉淀 5 个好用模板","summary":"好提示词有个固定四件套，而且各有分工：先用『角色』给 AI 定身份（比如『你是资深编辑』，视角就变了），再说清『任务』和要的『格式』，最后给『示例（Few-shot）』让它照着学腔调。底层逻辑是：你给的约束越具体、示范越明确，模型输出的随机性就越低、越贴近你想要的结果。四者是合力把模型『框』到正确轨道上。"},{"id":5,"week":"5","title":"用 WorkBuddy 完成一个多步工作流任务","type":"工具","hours":3,"note":"截图/记录流程","summary":"WorkBuddy 这类工具和普通聊天机器人的最大区别：你不告诉它每一步怎么做，只给一个『目标』，它自己拆步骤、调工具、最后给你产出文件。做到这点的内核叫『智能体（Agent）』——能自主规划、调工具、记结果；而把多个步骤和工具自动串起来跑，叫『工作流编排』。关系是：给目标不给步骤是表象，Agent 的自主性是内核，编排是把内核落到执行的手段。"},{"id":6,"week":"7","title":"体验即梦/可灵 生成图片/视频，理解多模态","type":"工具","hours":2,"note":"各生成 1 个作品","summary":"多模态说的是模型不再只懂文字，还能吃图片、视频、音频、并反过来生成它们——这是个『能力总称』。而『文生图』『文生视频』是多模态在创作上的两个具体落点：前者把一段描述变成一张图，后者变成一段视频。关系是：多模态是总能力，文生图、文生视频是它在『输入文字 → 输出视觉』这条线上的两个台阶（图比视频简单，视频是更高阶的形态）。"},{"id":7,"week":"8","title":"了解 Agent/智能体概念与典型场景","type":"认知","hours":2,"note":"写 100 字说明","summary":"智能体干活不是一步到位，而是一个循环，三样东西轮流转：先『规划』把大目标拆成小步骤（这是脑子），再用『工具调用』去执行（这是手，比如查资料、算个数），把结果存进『记忆』（这是笔记本），然后回去再规划下一步，直到事干完。关系是：规划定方向、工具去执行、记忆防遗忘，三者循环才构成 Agent『自己能干完活』的闭环。"},{"id":8,"week":"9","title":"了解幻觉、隐私与版权等 AI 常识","type":"认知","hours":2,"note":"记 3 条注意事项","summary":"用 AI 有三道必须守的线，而且是一层层往外扩：第一道『幻觉』——它输出可能是假的，所以事实你必须核实（风险在『你读到什么』）；第二道『数据隐私』——既然它要吞你的输入，就别把身份证、密码、商业机密喂给公开 AI（风险在『你写进去什么』）；第三道『版权』——它生成的东西归属还模糊，商用要看条款（风险在『你拿出什么』）。从读到写、从内容到合规，逐层外扩。"},{"id":9,"week":"10","title":"建立自己的『AI工具箱』清单与笔记","type":"项目","hours":3,"note":"形成在线笔记","summary":"前面 9 节你试了一堆工具，这节把它们归拢成一张表：名字、干啥用、啥场景。整理成表这件事本身叫『工具链』——为某类活特意组合起来的工具清单（一次性清点）；而长期把笔记、模板有序存好、能随时搜出来用，叫『知识管理』（长期养成的习惯）。关系是：工具链是这次清点，知识管理是把清点结果一直养下去的体系。"},{"id":10,"week":"11","title":"费曼输出：写一篇《我理解的AI》","type":"项目","hours":2,"note":"能讲给朋友听懂","summary":"前面 9 节是从『概念』（AI 到底是啥）→『工具』（怎么用）→『安全』（怎么守规矩）层层积累。这节是自检：逼你用 300 字、自己的话把这条线串起来。逻辑很硬——能写出来说明真懂，写不出说明还糊。关系是：概念→工具→安全是前三层的积累，这次『讲给别人听』是把积累压实、检验的元认知训练。"}]},{"id":2,"name":"计算机基础与Python入门","goal":"理解计算机原理，会写 Python 小程序","month":4,"tasks":[{"id":11,"week":"13","title":"搞懂计算机：CPU/内存/硬盘/操作系统","type":"认知","hours":3,"note":"画一张结构图","summary":"把电脑想成一家工厂，四个角色各管一摊、配合作业：CPU 是真正干活的『工人』（执行计算和判断）；内存是工人手边正在用的『台面』（快，但一断电东西就没）；硬盘是长期存货的『仓库』（慢但容量大、断电也不丢）；操作系统是『厂长』，管着所有人怎么配合。先有这个画面，后面学编程就不会懵。"},{"id":12,"week":"14","title":"理解文件、文件夹、路径概念","type":"认知","hours":1,"note":"能说清绝对/相对路径","summary":"要找东西得先知道东西存在哪，三个概念一路递进：『文件』是最小的那个数据单位；『文件夹（目录）』是把一堆文件归类放好的抽屉；『路径』就是文件的『家庭住址』（比如 C:\\a\\b.txt），靠它才能精确定位。关系是：文件是内容、文件夹是容器、路径是坐标，三者合起来你才能在电脑里不迷路。"},{"id":13,"week":"15","title":"安装并配置 VS Code + Python 环境","type":"工具","hours":2,"note":"能运行 hello world","summary":"写代码需要两样东西：一个『笔记本』和一个『语言』。VS Code 就是那本好用的笔记本（集成开发环境，带编辑、运行、调试）；Python 是咱们路线要学的主打语言（语法接近大白话、零基础友好）。这节的目标是：把这两样装好，能跑出第一行 print 就算成功。关系是：编辑器管『怎么写和跑』，语言管『写什么』，两者齐了才动得了手。"},{"id":14,"week":"17","title":"学会终端基本操作 cd/ls/mkdir","type":"工具","hours":3,"note":"完成 5 个命令练习","summary":"命令行就是不用鼠标点、而是打字让电脑干活（和用鼠标点的图形界面相对），你打字的那个窗口叫『终端』。几个最基础的命令是地基：cd 换目录、ls 看里面有什么、mkdir 新建文件夹。关系是：先理解『命令行 vs 终端』这组概念，再练 cd/ls/mkdir 这几个动作，你就掌握了和电脑『打字对话』的基本功。"},{"id":15,"week":"18","title":"Python 变量、数据类型、运算符","type":"编程","hours":4,"note":"做 10 道小题","summary":"盖任何程序都要这三类『砖头』，各管一摊：『变量』是个贴了标签的盒子，里面装数据、还能换；『数据类型』决定盒里装的是数字、文字还是真假（布尔）；『运算符』是让数据动起来的加减乘除和比大小。关系是：变量是容器、类型是容器里装啥、运算符是对容器里的东西做什么，三者合力才构出最小的数据操作。"},{"id":16,"week":"19","title":"条件语句 if / 循环 for-while","type":"编程","hours":4,"note":"写 3 个循环小程序","summary":"程序从『一行行死板往下』变成『会判断、会循环』，靠两种能力：『if 条件』让程序看情况办不同的事（会判断）；『for / while 循环』让程序把一类事重复做很多遍（会循环）。关系是：条件负责『分支』、循环负责『重复』，有了这两样，程序才从流水线变成活的流程。"},{"id":17,"week":"21","title":"字符串与列表/字典基础操作","type":"编程","hours":4,"note":"做数据小练习","summary":"Python 里装数据最常用的三个容器，按用途分开：『字符串』是一段文字（比如『你好』）；『列表』是按顺序排好的一串数据，能增删改、能重复；『字典』是『名字配对内容』的查表本（比如 {'name':'小明'}），用名字一下取到内容。关系是：字符串管文字、列表管顺序、字典管对应关系，装啥选啥容器。"},{"id":18,"week":"22","title":"函数定义与调用","type":"编程","hours":3,"note":"写一个带参数的函数","summary":"把一段能复用的代码打包成一个『黑盒子』，就是『函数』：丢进去原料（输入），吐出成品（输出）；而『参数』就是你丢进去的那份原料，让同一个盒子能应对不同情况。关系是：函数解决『重复造轮子』，参数解决『同一个轮子应对不同料』，二者一起让代码不重复、好维护。"},{"id":19,"week":"23","title":"读懂并改写 3 个 Python 例子","type":"编程","hours":4,"note":"注释每行代码","summary":"读别人的代码、再动手改，是『能看懂 → 会写』的过渡。这里两个能力：『代码阅读』是不光运行、更要理解别人『为什么这么写』；『重构』是不改功能、只把代码改得更清楚好维护。关系是：先读得懂（理解他人思路），才改得动（在不破坏功能前提下理顺它）。"},{"id":20,"week":"25","title":"用 Python 写『待办清单』小程序","type":"项目","hours":5,"note":"可运行的小工具","summary":"这节把前面学的变量、列表、循环、函数凑一块，做一个能增、删、查、存的小程序。背后两个概念：『CRUD（增删改查）』是程序对数据最常规的四种操作；『持久化』是让数据关掉程序还在（比如写进文件）。关系是：前面 19 节是零件，这次用 CRUD + 持久化把它们拼成你第一个完整作品，检验是不是真懂了。"},{"id":21,"week":"26","title":"初识 Git：版本控制、init/add/commit","type":"工具","hours":3,"note":"本地建仓并提交","summary":"Git 像个『时光机』，把代码的每次改动都记下来，让你能回头看、能对比、还能多人一起改。三个动作串起这趟时光机：init 开工、add 把改动暂存、commit 存成一个带说明的版本。关系是：仓库（Repository）是受管理的项目文件夹，提交（Commit）是历史的最小单元，版本控制（Git）靠它俩记录整部『代码进化史』。"},{"id":22,"week":"27","title":"注册 GitHub 并推送第一个仓库","type":"工具","hours":2,"note":"远程仓库可见","summary":"GitHub 相当于云上的 Git 硬盘：本地仓库 push 上去，代码既有了备份、也有了分享地址。关系接上节：上节 Git 是在你自己电脑上记历史，这节『代码托管』是把那份历史搬到『远程仓库（Remote）』云端，于是从『个人时光机』升级成『团队可共享的备份与协作入口』，也是你进开源世界的第一张门票。"}]},{"id":3,"name":"Python进阶与数据处理","goal":"熟练处理数据、调 API","month":8,"tasks":[{"id":23,"week":"29","title":"文件读写（txt/csv/json）","type":"编程","hours":3,"note":"写读写脚本","summary":"程序常常要把数据存进文件、或从文件读出来，三种格式各有所长：txt 是纯文字、csv 是表格、json 是程序之间交换数据的通用格式。背后的动作叫『序列化』——把程序里的数据转成能存能传的文本。关系是：三种格式是『存什么形态』，持久化是『让数据离开程序也还在』这个目的，序列化是实现它的手段。"},{"id":24,"week":"30","title":"异常处理 try/except","type":"编程","hours":2,"note":"加容错逻辑","summary":"程序跑着跑着可能出错（比如文件找不到），这种错误叫『异常』。『容错』就是提前预判哪里会出事、用 try/except 温柔接住它，而不是整个崩掉。关系是：异常是『会出什么事』，容错是『怎么让它不出事就挂掉』，写好容错是程序不容易挂、更稳的关键。"},{"id":25,"week":"31","title":"面向对象基础：类与对象","type":"编程","hours":4,"note":"写一个类","summary":"面向对象用现实事物来组织代码，三件套一层层来：『类』是一张模板（比如『狗』长啥样），『对象』是按模板造出来的具体一个（比如『你家的旺财』），『面向对象（OOP）』是用类和对象来写代码的整体思路。关系是：类是图纸、对象是按图造出的实物，OOP 是把这种『模板→实例』的思路贯穿到整个程序，便于复用和扩展。"},{"id":26,"week":"32","title":"模块与包、pip 安装第三方库","type":"编程","hours":2,"note":"安装并用一个库","summary":"别事事自己写，站巨人肩膀上：『模块』是别人写好的单个 .py 代码文件，『包』是一堆模块的集合，用 pip 一行命令就能装第三方库（比如 pandas）。背后是『依赖管理』——记下并装好项目需要的库和版本。关系是：模块是零件、包是零件组合、pip 是取零件的商店，依赖管理保证大家环境一致、不打架。"},{"id":27,"week":"33","title":"用 requests 调用一个公开 API","type":"编程","hours":3,"note":"拿到 JSON 数据","summary":"想让你的程序联网拿实时信息，靠这套：『API』是程序之间『要数据』的标准窗口（像点菜窗口），用『HTTP 请求』（比如 GET 取数据）去敲它，它通常用『JSON』返回结果、你用 .json() 解析成能用的数据。关系是：API 是接口、请求是敲门动作、JSON 是敲门后递回来的数据格式，三者串起『程序联网取数』。"},{"id":28,"week":"35","title":"NumPy 基础：数组与向量化","type":"编程","hours":4,"note":"做数组运算","summary":"NumPy 提供高效的『数组（ndarray）』——比 Python 列表算得快得多的数字表格；『向量化』让你一行代码对整个数组做运算，不用写循环；深度学习里数据的基本样子叫『张量』，本质就是多维数组。关系是：数组是地基、向量化是建在地基上的高效算法、张量是把这套数组概念用到深度学习的说法，它仨是科学计算的地基。"},{"id":29,"week":"36","title":"Pandas 基础：读表/筛选/分组","type":"编程","hours":5,"note":"处理一张表","summary":"Pandas 把数据当成一张『表格（DataFrame）』，读 csv、按条件筛、按类别分组统计都轻轻松松；表格里的一列叫『Series（序列）』。关系是：DataFrame 是整张二维表、Series 是其中的一列，Series 组合成 DataFrame，处理表格数据几乎离不开它。"},{"id":30,"week":"37","title":"用 Pandas 清洗一份真实数据集","type":"项目","hours":4,"note":"产出干净数据","summary":"真实数据往往很脏——缺值、重复、格式乱，这节用 Pandas 三步收拾：先填『缺失值』、再去『重』、再改格式；收拾干净后，往往还要做『特征工程』——把原始数据加工成更适合模型学习的形式。关系是：清洗是『把脏数据弄干净』（不出错的前提），特征工程是『把干净数据调成模型最爱吃的样子』（学习效果的头号前置）。〔打个比方：特征工程就像『把原始食材切好腌好再下锅』——同样的料，处理得好不好，直接决定模型这道菜好不好吃。〕"},{"id":31,"week":"38","title":"用 Matplotlib 画 3 种图","type":"编程","hours":3,"note":"折线/柱状/散点","summary":"分析最后、也最关键的一步是把数字讲给人听：把数字变成折线、柱状、散点等『图表』，就是『数据可视化』。关系是：原始数字是给机器看的、图表是给人看的，可视化是把『算出来的结论』翻译成『人一眼能懂的趋势和关系』，是数据分析交付的最后一环。"},{"id":32,"week":"39","title":"做一个『CSV 数据分析小工具』","type":"项目","hours":5,"note":"可复用脚本","summary":"这节把前面学的『读表（Pandas）+ 清洗 + 画图（Matplotlib）』串成一条『端到端流水线』，做一个输入一个 csv、输出统计图表的工具。关系是：前面 29/30/31 分别练了读表、清洗、画图三块零件，这次用一个 Pipeline 把它们自动衔接，是一次 mini 项目实战。"}]},{"id":4,"name":"AI/机器学习基础","goal":"理解机器学习与神经网络原理","month":11,"tasks":[{"id":33,"week":"41","title":"机器学习：监督/无监督/强化","type":"认知","hours":3,"note":"画分类图","summary":"机器学习按『问题类型』分三大家，解决的是不同的事：『监督学习』有标准答案可对照（比如这封是不是垃圾邮件）；『无监督学习』数据没标签、让模型自己找结构（比如自动分群）；『强化学习』靠试错+奖励学策略（适合下棋）。关系是：三大家对应三类问题——有答案 / 没答案 / 靠奖惩，标签是监督学习里那列『标准答案』。〔打个比方：监督学习像『有标准答案的刷题』；无监督学习像『没人告诉你分类、你自己把相似的东西凑一堆』；强化学习像『训狗——做对给零食、做错没有，慢慢学会好行为』。〕"},{"id":34,"week":"42","title":"训练集/验证集/测试集与过拟合","type":"认知","hours":3,"note":"举例说明","summary":"训练模型前，数据要分三份各有职责：训练集学参数、验证集调超参、测试集做最终考试；而『过拟合』就是模型把训练集背死了、新数据上一塌糊涂，和它相对的『泛化』才是目标——在没见过的新数据上也好用。关系是：三分数据是为了『练—调—考』，过拟合是练过头、泛化才是真会解，这是机器学习的核心难题。〔打个比方：过拟合就像『把课本例题背得滚瓜烂熟，但考试换道题就不会』；泛化才是『真听懂了，换题也会做』；训练/验证/测试集相当于『练习册 / 模拟考 / 正式高考』三份卷子。〕"},{"id":35,"week":"44","title":"用 scikit-learn 跑通一个分类任务","type":"编程","hours":4,"note":"模型能预测","summary":"这节拿现成库几行代码就跑通『喂数据 → 训练 → 预测』一个分类任务。背后两个概念：『分类』是预测样本属于哪一类，『训练 / 预测』是拟合模型 / 用模型出结果。关系是：数据（带标签）是原料、训练把原料变成模型、预测用模型对新样本出结果，这就是一条『机器学习流水线』的最小直观版。〔打个比方：训练像『老师拿带答案的题反复教模型』；预测像『教完后给它新题让它做』。〕"},{"id":36,"week":"45","title":"特征/标签/准确率/精确率/召回率","type":"认知","hours":3,"note":"能解释指标","summary":"评价一个模型好不好，先分清『特征（输入 / 判断依据）』和『标签（答案）』，再用三个尺子量：准确率 = 整体对的比例；精确率 = 它说是正的里面真为正的（别误报）；召回率 = 该找出的里面它找出了多少（别漏报）。关系是：特征和标签是『拿什么评』，三个指标是『从不同角度评』——整体、误报、漏报，看场景侧重哪个。"},{"id":37,"week":"47","title":"线性回归与逻辑回归直觉","type":"认知","hours":3,"note":"讲清区别","summary":"统计学习里最基础、也最常用的两类模型，对应两种任务：『线性回归』用一条直线去拟合、预测连续的数（比如房价）；『逻辑回归』名字带回归、其实做的是二分类、输出属于某类的概率。关系是：回归（预测连续数）和分类（预测属于哪类）是监督学习的两大任务，这俩模型分别是它们最入门的代表。〔打个比方：回归像『根据面积估房价——吐出一个具体数字』；逻辑回归名字带回归，其实是『给一个『属于某类』的概率』，像给每封邮件算『是垃圾邮件的可能性』。〕"},{"id":38,"week":"49","title":"神经网络：神经元/激活/前向传播","type":"认知","hours":4,"note":"画网络图","summary":"深度学习的基本零件，从最小单元往上搭：『神经元』对输入加权求和、再过一道『激活函数』引入非线性；一层层连起来就是网络；数据从输入一路算到输出，叫『前向传播』。关系是：神经元是砖、激活函数让砖能垒出复杂形状、前向传播是数据从入口走到出口的过程，三者构成网络算一次的全过程。〔打个比方：神经元像『一个只会做加权平均再套个公式的小员工』；激活函数像『决定这个员工要不要开口说话的开关』；前向传播就是『一份数据从第一层员工一路传到最后一层出结果』。〕"},{"id":39,"week":"50","title":"Transformer 与注意力机制（概念级）","type":"认知","hours":4,"note":"500字理解笔记","summary":"理解大模型底座，抓住一个机制：『注意力』让模型处理每个词时『重点看』跟它相关的其他词、而不是一视同仁；以注意力为核心的架构叫『Transformer』，是当今大模型的共同底座；『自注意力』是序列内部各位置互相算注意力、能抓远距离关系。关系是：注意力是单个技巧、Transformer 是用这个技巧搭出的整体架构、自注意力是它在序列内部的具体形式。〔打个比方：注意力就像你读一句话时，看到『它』会自然回头找前面最近的『那只猫』——模型处理每个词时也动态去『看』最相关的其他词，而不是一视同仁。〕"},{"id":40,"week":"52","title":"常见模型家族：CNN/RNN/LLM","type":"认知","hours":3,"note":"列应用场景","summary":"不同任务用不同网络架构，记住对应就好：CNN 擅长图像（抠局部特征）、RNN 擅长序列（文本、时间）、大语言模型（大模型）多半是 Transformer 堆出来的、擅长语言。关系是：架构决定擅长什么——CNN 对空间、RNN 对顺序、Transformer 对语言，选架构就是按任务类型选『合适的脑子』。"},{"id":41,"week":"53","title":"用 sklearn 完成一个小型预测项目","type":"项目","hours":5,"note":"有评估报告","summary":"这节走完一个完整的机器学习小项目：选数据 → 特征工程 → 训练 → 评估，把前面零散的知识点连成一条线。关系是：前面 33–40 分别学了三大家、数据划分、训练预测、评估指标、各类模型，这次用一条『ML 流水线』把它们首尾串起来，形成端到端做项目的完整画面。"},{"id":42,"week":"55","title":"费曼输出：讲清楚『模型怎么学』","type":"项目","hours":2,"note":"录/写讲解","summary":"这节用你自己的话讲清：模型到底是怎么『从数据里找规律、又拿规律预测新数据』的。关系是：前面 33–41 是从各个侧面拆机器学习，这次逼你用一句话把『找规律 → 预测』这条主链路讲顺，讲得清才是真懂，呼应第 10 节那种『讲给别人听』的自检。"}]},{"id":5,"name":"大模型应用开发","goal":"用 API 做 RAG / 智能体应用","month":15,"tasks":[{"id":43,"week":"57","title":"理解 Token、上下文窗口、温度等参数","type":"认知","hours":2,"note":"调参看差异","summary":"想调得动大模型，得先懂三个参数，而且它们的作用环环相扣：『Token』是模型处理文字的最小单位、也决定你花多少钱；『上下文窗口』是它一次能记住多长（超了就忘前面）；『温度』控制它发挥得多随意（高更发散、低更稳）。关系是：Token 管『算多少、花多少』，上下文窗口管『记多少』，温度管『怎么发挥』，三者共同决定一次对话的成本和风格。〔打个比方：Token 像『模型数钱的『字』，你喂得越多它数得越贵』；上下文窗口像『它的短期记忆容量，装满了前面的就忘』；温度像『它的心情——高就放飞自我、低就一本正经』。〕"},{"id":44,"week":"58","title":"调用 OpenAI/Claude/Gemini API 发第一条消息","type":"编程","hours":3,"note":"跑通代码","summary":"这节用几行 Python 调用 OpenAI / Claude / Gemini 的接口，发一条消息、拿回回复——这是把大模型接进你自己程序的第一步。几个概念配合：『API Key』是身份凭证（等于密码、绝不能公开）；『SDK』是官方封装好的代码库、让你几行就能调；底层是『REST API』（发请求、收 JSON）。关系是：Key 证明你是谁、SDK 帮你省事、REST API 是它们底下通用的通信方式。"},{"id":45,"week":"60","title":"系统提示工程：Few-shot/Chain-of-Thought","type":"工具","hours":4,"note":"对比效果","summary":"不训练就能提效果的三招，分工明确：『系统提示』在对话最前定下 AI 的角色和底线；『Few-shot（给示例）』让模型照着学格式和腔调；『思维链（CoT）』让模型先一步步推理再给答案。关系是：系统提示管『身份边界』、Few-shot 管『样子』、CoT 管『思考过程』，三招叠加，复杂问题更准、输出更可控。"},{"id":46,"week":"62","title":"Function Calling / 工具调用原理","type":"编程","hours":3,"note":"实现一次调用","summary":"让 AI 从『只会聊天』变成『真能干实事』，靠这座桥：『函数调用』让模型输出『该调哪个函数、参数是啥』，由你的程序真正去执行；『工具调用』和它是同一个意思，强调 AI 借助外部工具完成动作。关系是：模型本身只吐文字，函数 / 工具调用让那句文字变成『真的去查天气、算价格』的行动，是聊天机器人升级成能干活 Agent 的关键。"},{"id":47,"week":"64","title":"嵌入(Embeddings)与向量数据库入门","type":"认知","hours":3,"note":"存/查向量","summary":"想做『按意思搜』而不是『按关键词搜』，靠这套：『嵌入（Embedding）』把文字、图片变成一组能算相似度的数字向量，意思相近的内容向量也离得近；『向量』就是这组数字本身；靠『语义搜索』按向量相似度检索。关系是：Embedding 是『把意思变成数字』、向量是『数字的样子』、语义搜索是『用这些数字找相近内容』，三者是 RAG 的记忆底子。〔打个比方：Embedding 就像给每句话发一张『意义坐标』，意思接近的句子坐标离得近，于是『按意思找』就变成了『在地图上找邻居』。〕"},{"id":48,"week":"66","title":"搭建 RAG：检索增强生成最小可用","type":"编程","hours":6,"note":"能基于文档问答","summary":"RAG = 先检索相关资料、再把资料喂给模型回答，这样它『有凭有据』、少胡说。最小闭环五步：『切块（Chunking）』把长文档切小 → 『向量化（Embedding）』存进向量库 → 检索 → 拼进提示 → 回答。关系是：上节 Embedding + 向量库是地基，这节 RAG 在地基上盖出『先找后答』的房子，切块和向量化是把资料接进来的两道关键工序。〔打个比方：RAG 就像『开卷考试』——回答前先翻书（检索）把相关页夹好（向量化），再照着书答题，自然不容易瞎编。〕"},{"id":49,"week":"67","title":"了解 LangChain / LlamaIndex 等框架","type":"编程","hours":3,"note":"跑官方示例","summary":"这些框架把『调模型、接工具、做检索』等常见步骤打包好，让你少重复造轮子；而『编排』是把多个模型、工具、步骤按逻辑自动组织协同。关系是：框架（如 LangChain）是现成的『零件箱』，编排是『怎么把零件拼成能跑的机器』，两者配合让你更快搭出 AI 应用。"},{"id":50,"week":"69","title":"理解 Agent：规划/记忆/工具循环","type":"认知","hours":3,"note":"画 Agent 流程图","summary":"这节把 Agent 内部那套循环讲透：接到『目标』后，自己『规划』步骤 → 『调工具』执行 → 记进『记忆』→ 循环到完事。关系是：呼应第 7 节的规划—工具—记忆循环，这里更强调『目标驱动』这个起点——Agent 和普通模型的区别就在于它是为了达成目标而自主转这套循环，而不是等你一句句下令。"},{"id":51,"week":"71","title":"用低代码平台搭一个智能体工作流","type":"项目","hours":4,"note":"可运行工作流","summary":"这节用 Coze、扣子、Dify 这类拖拽式平台，不写代码也能把『触发 → 模型 → 工具 → 输出』串起来，把做 AI 应用的门槛降下来。关系是：第 50 节讲 Agent 的内部原理，这节给它配一个『不用写代码的壳』——低代码（拖拽配置）把原理包成可视化工作流，让不懂编程也能搭应用。"},{"id":52,"week":"73","title":"做『基于自己资料的问答机器人』","type":"项目","hours":8,"note":"本地能对话","summary":"这节把你的文档（知识库）喂给 RAG，做一个只依据这些资料回答的机器人——这是企业和个人最常用的 AI 落地形态。关系是：第 48 节学了 RAG 原理，第 47 节有向量库底子，这节把『你的私有资料』接进去，RAG 就从通用检索变成『只认你家的知识库』的专属问答。"},{"id":53,"week":"75","title":"部署到云端（CloudBase/EdgeOne）","type":"项目","hours":4,"note":"公网可访问","summary":"把做好的应用发布到云上，拿到一个公网链接，别人也能打开——这是从『本地 Demo』到『真产品』的关键一步。几个概念配合：『部署』是发布到服务器跑起来，『云服务（PaaS）』帮你托管少管底层，于是应用拿到『公网访问』的 URL。关系是：部署是动作、PaaS 是帮你省事的平台、公网访问是结果，三者把 Demo 变成谁都能开的产品。"}]},{"id":6,"name":"前端与产品化","goal":"把 AI 能力做成网页产品","month":20,"tasks":[{"id":54,"week":"77","title":"HTML 结构：标签/表单/语义化","type":"编程","hours":4,"note":"写静态页","summary":"网页由三层叠出来，这节是第一层：HTML 用标签描述网页的『内容和结构』（标题、段落、按钮、输入框），是网页的骨架，决定页面上有什么。关系是：HTML 管『有什么』，它解析成的『DOM』是 JS 后面操作页面的接口，为 55/56 两节（长相、动起来）打底。"},{"id":55,"week":"79","title":"CSS 布局与样式基础","type":"编程","hours":4,"note":"美化页面","summary":"这节是网页第二层：CSS 负责『长什么样』——颜色、间距、排版，还有『响应式』让手机电脑都能看。关系是：HTML 是骨架、CSS 是给它化妆，响应式解决『妆在不同屏幕上都不花』的问题，决定页面好不好看、手机上顺不顺。"},{"id":56,"week":"81","title":"JavaScript 基础：变量/DOM/事件","type":"编程","hours":5,"note":"做交互效果","summary":"这节是网页第三层：JavaScript 让网页『动起来』——改内容、响应点击、动态更新；它靠『DOM』这个接口操作页面，靠『事件』（点击、输入）触发响应。关系是：HTML 给骨架、CSS 给颜值，JS 让骨架 + 颜值『活』过来，DOM 是它动手的把手、事件是人动手的开关。"},{"id":57,"week":"83","title":"用 Streamlit 快速做 AI 应用界面","type":"编程","hours":4,"note":"跑出界面","summary":"Streamlit 用很少代码就把 Python 脚本变成带输入框和图表的网页，最适合快速给 AI 模型套个界面做 demo。关系是：前面 53–56 学了网页三层，但写完整网页费时；Streamlit 是『捷径』——用『组件（Widget）』（输入框、滑块、按钮）直接在 Python 里出界面，跳过手写前端，专注快速原型（Rapid Prototyping）。"},{"id":58,"week":"85","title":"（可选）React 基础组件与状态","type":"编程","hours":5,"note":"写小组件","summary":"React 用『组件』拼页面、用『状态』管理变化，是现代前端主流框架（可选学，但读懂它有助于看开源前端）。关系是：组件是可复用的 UI 单元（对应前面 DOM 元素的高级封装），状态是组件里随时间变的数据（变了就重渲染），虚拟 DOM 是 React 高效更新真实页面的办法，三者是读懂复杂前端项目的钥匙。"},{"id":59,"week":"87","title":"前后端联通：前端调用后端 API","type":"编程","hours":4,"note":"能联调","summary":"前端（界面）和后端（逻辑 / 模型）通过 HTTP 分开又相连：前端发请求、后端回响应、数据再由前端画出来。关系是：前面 54–58 偏前端，这节补上『后端』这一半，HTTP 是连接两半的协议，前后端分离让两边各干各的、还能多端复用同一套后端。"},{"id":60,"week":"89","title":"把阶段5的机器人做成网页应用","type":"项目","hours":8,"note":"网页版机器人","summary":"这节把阶段 5 的问答机器人（RAG + 知识库）用 Streamlit 或前端包起来、连上后端 API，做成能分享的网页应用，综合检验产品化能力。关系是：第 52 节做出机器人内核、第 53 节学部署、第 57–59 节学界面与前后端，这次把『内核 + 界面 + 后端 + 部署』合起来，按 MVP（最小可行产品）思路端到端交付。"},{"id":61,"week":"91","title":"域名/部署/上线基础流程","type":"工具","hours":3,"note":"完成一次上线","summary":"让产品真正被人用起来，走通上线四步：买『域名』（网站名字）→ 『DNS』把它解析成服务器 IP → 部署上去 → 访问（注意端口、HTTPS、静态资源这些坑）。关系是：域名和 DNS 解决『别人怎么找到你』，部署和 HTTPS 解决『找到后能安全打开』，四步串起从本地到公网的全过程。"}]},{"id":7,"name":"Git与开源阅读贡献","goal":"读懂并参与开源项目","month":24,"tasks":[{"id":62,"week":"93","title":"Git 进阶：分支/合并/冲突解决","type":"工具","hours":4,"note":"模拟一次冲突","summary":"团队开发靠这套不打架：『分支』让你并行开发不同功能、互不干扰；『合并（merge）』把分支改动合回主线；两人改了同一处就叫『冲突』、得手动协调。关系是：分支是『分头干』、合并是『汇回来』、冲突是汇合时撞车，三者是多人协作的日常三件套。"},{"id":63,"week":"95","title":"GitHub Flow：PR/Issue/Code Review","type":"工具","hours":3,"note":"走完流程","summary":"参与开源有一套标准动作：用『PR（拉取请求）』申请把改动并入主线、附带说明供人审查；用『Issue』跟踪任务或 bug；合并前的『代码审查（Code Review）』把关质量。关系是：Issue 是『要做什么 / 出了啥问题』，PR 是『我改好了请并入』，Code Review 是并入前的质量闸门，三者构成开源协作的闭环。"},{"id":64,"week":"97","title":"学会读别人的代码：README→目录结构","type":"认知","hours":3,"note":"画一张代码地图","summary":"读陌生代码有方法论，第一步是建立全局印象再下钻：先看『README』（项目地图：简介、安装、用法）和目录结构，再顺着『入口文件』（最先执行的 main.py / app.js）往下钻。关系是：README + 目录是『先看森林』，入口文件是『找到树再往下钻』，先全局后局部才读得懂大项目。"},{"id":65,"week":"99","title":"精读一个中小型开源 AI 项目源码","type":"阅读","hours":8,"note":"写阅读笔记","summary":"选一个合适的项目，顺着入口读核心模块，搞懂它『数据怎么流、模型怎么调』——把读代码变成可拆解的体力活。关系是：第 64 节学了『从哪读』，这节学『读的时候盯什么』——重点看『调用栈（谁调了谁）』和数据流，把抽象的读码变成沿着调用链一步步跟的具体活。"},{"id":66,"week":"101","title":"用调试器/打印跟踪代码执行","type":"编程","hours":3,"note":"定位一个 bug","summary":"排查 bug、理解别人代码，最实在的手段是『看程序一步步怎么跑』：用『断点』在代码某行设暂停点，靠『调试器』单步执行、看变量、查调用栈；朴素版的『打印调试』是在关键处 print 变量值。关系是：调试器是断点 + 单步的可视化升级版，print 是没装 IDE 也能用的保底法，两者目的都是『看清变量怎么变、程序走到哪』。"},{"id":67,"week":"103","title":"给开源项目提交第一个文档/翻译 PR","type":"项目","hours":4,"note":"PR 被合并/受理","summary":"迈出开源贡献第一步，从低风险入手：『Fork（复刻）』把别人仓库复制到自己账号下随便改，改完发『PR』申请合回原项目。关系是：第 63 节学了 PR 是什么，这节真走一遍 Fork → 改 → PR 全流程，先用改文档、翻译这种不碰核心的活练手，把流程跑通。"},{"id":68,"week":"105","title":"修复一个 good-first-issue","type":"项目","hours":6,"note":"提交代码 PR","summary":"接真实协作修复，从『good-first-issue』入手——这是维护者特意留给新手的友好任务。流程：查 Issue → 本地『复现（Reproduce）』bug → 改代码 → 提 PR。关系是：good-first-issue 解决『从哪接』，复现解决『先确认问题真存在』，再改再提 PR，完成一次真实的开源协作修复。"},{"id":69,"week":"107","title":"在 GitHub 维护自己的学习仓库与笔记","type":"项目","hours":3,"note":"持续更新","summary":"把自己的笔记和代码 push 到 GitHub、用 README 写清楚，既备份又展示，就是你的『公开作品集』。关系是：前面 21–22 学了 Git + GitHub 是备份和分享，这节把用途升级成『个人名片』——README 是项目门面、作品集是求职和交流最好的证明，GitHub Pages / Vercel 还能让它变成可访问的主页。"}]},{"id":8,"name":"进阶与专精","goal":"微调/评测/系统设计与方向深耕","month":28,"tasks":[{"id":70,"week":"109+","title":"模型微调基础：LoRA/PEFT 概念","type":"认知","hours":3,"note":"写概念笔记","summary":"模型不是训完就完，有时候要用你的数据『再训一点』，这就是『微调』；但全量重训太费资源，所以有了『LoRA / PEFT』——只训练少量新增参数，省显存、还不容易过拟合。关系是：预训练是『用海量通用数据先打底』，微调是『在你的数据上接着训更适配』，LoRA / PEFT 是让微调又快又省的省钱技巧。〔打个比方：预训练像『一个人先读遍百科全书打下底子』；微调像『再让他专门读你们公司的手册，变成你们业务的专家』；LoRA 则是『不重读全书，只给他加几页便签笔记』，又快又省。〕"},{"id":71,"week":"109+","title":"评估与评测：如何判断模型好坏","type":"认知","hours":3,"note":"设计评测集","summary":"别凭感觉评判模型，要用量化指标打分：用『测试集』加明确指标（准确率、『F1 分数』——精确率和召回率的调和平均、以及『人类评估』看通顺有用安全）。关系是：测试集是『考题』，三个指标是『从不同角度打分』（机器算的 vs 人看的），评估要贯穿模型从生到死的全过程，而不是训完看一眼就完。"},{"id":72,"week":"109+","title":"MLOps 基础：实验/部署/监控","type":"认知","hours":4,"note":"画流水线","summary":"让 AI 真能在生产环境里跑、且跑得稳，靠 MLOps——把『实验 → 上线 → 监控』全流程工程化。几个概念：『CI/CD』让代码改动自动测试并上线，『监控』上线后持续看模型表现和系统健康。关系是：第 71 节评的是『模型好坏』，MLOps 管的是『好模型怎么稳稳上线、持续运维』，CI/CD 和监控是这套工程化的两道保障。"},{"id":73,"week":"109+","title":"AI 系统设计与成本/延迟权衡","type":"认知","hours":4,"note":"做一次方案对比","summary":"做 AI 系统得在『效果、成本、速度』之间做『权衡』，工程决策往往比算法更影响落地：比如大模型选哪家、要不要『缓存』常见结果省成本、怎么压『推理成本』（每次回答的花费）。关系是：权衡是总原则（没有全最好），缓存和推理成本是衡量这个原则的两个具体旋钮，调好它们比单纯追算法精度更决定产品能不能用得起。"},{"id":74,"week":"109+","title":"选一个方向深挖（CV/NLP/Agents/多模态）","type":"项目","hours":0,"note":"定方向+路线图","summary":"全栈通才也得有专精，不能样样浅：选一个最有兴趣的方向（视觉、语言、智能体、多模态）深挖，建立『技术纵深』。这个概念叫『T 型能力』——一横是广博的通才面、一竖是某个方向的纵深专精。关系是：前面 1–73 横向铺开了通才面，这节提醒你补上那『一竖』，形成别人替代不了的优势。"},{"id":75,"week":"109+","title":"读论文/技术博客并做笔记","type":"阅读","hours":0,"note":"形成阅读习惯","summary":"保持站在前沿，最好的方式是读『一手资料』——论文（arXiv）、官方博客、代码仓库，比二手解读更准更全，再产出自己的笔记。关系是：一手资料是源头、自己的笔记是消化后的沉淀，读一手 + 写笔记这个闭环，让你不被二手信息带偏、持续贴着前沿。"},{"id":76,"week":"109+","title":"做一个完整可上线的 AI 产品","type":"项目","hours":0,"note":"独立交付产品","summary":"毕业考：从『需求 → 设计 → 开发 → 部署 → 迭代』完整走一遍，做出能给别人用的产品。关系是：前面 1–75 把概念、工具、前后端、开源、部署、评估全铺了一遍，这节用一条完整的『产品生命周期』把它们串起来，按 MVP 思路快速做出能用的版本、再迭代，是『全栈通才』的最终检验。"}]}]};
+  var KEY = "study_pub_done";
+  var done = {};
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+
+  function cnNum(n) {
+    n = parseInt(n, 10) || 0;
+    var d = ["零","一","二","三","四","五","六","七","八","九"];
+    if (n < 10) return d[n];
+    if (n === 10) return "十";
+    if (n < 20) return "十" + d[n % 10];
+    var t = Math.floor(n / 10);
+    return d[t] + "十" + (n % 10 ? d[n % 10] : "");
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+  }
+
+  function render() {
+    var wrap = document.getElementById("stages");
+    var html = "";
+    DATA.stages.forEach(function (s) {
+      var total = s.tasks.length;
+      var cnt = s.tasks.filter(function (t) { return done[t.id]; }).length;
+      html += '<details class="stage" open>'
+        + '<summary>'
+        + '<span class="snum">第' + cnNum(s.id) + '阶段</span>'
+        + '<span class="stx"><b>' + esc(s.name) + '</b>'
+        + '<small>' + esc(s.goal) + ' · 约第 ' + esc(s.month) + ' 个月起</small></span>'
+        + '<span class="scount"><b>' + cnt + '</b> / ' + total + '</span>'
+        + '<svg class="schev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>'
+        + '</summary>'
+        + '<div class="sbar"><i style="width:' + (total ? Math.round(cnt / total * 100) : 0) + '%"></i></div>'
+        + '<div class="sbody">';
+      s.tasks.forEach(function (t) {
+        var meta = [];
+        if (t.type) meta.push(esc(t.type));
+        if (t.hours) meta.push("约 " + esc(t.hours) + " 小时");
+        if (t.week) meta.push("第 " + esc(t.week) + " 周");
+        html += '<div class="task' + (done[t.id] ? " done" : "") + '" data-id="' + t.id + '">'
+          + '<button class="cbx" aria-label="标记完成" onclick="toggle(' + t.id + ')">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4.5 12.5 10 18 19.5 6.5"/></svg>'
+          + '</button>'
+          + '<div class="tx">'
+          + '<div class="tt">' + esc(t.title) + '</div>'
+          + (meta.length ? '<div class="tmeta">' + meta.join('<span class="dot">·</span>') + '</div>' : "")
+          + (t.summary ? '<p class="tsum">' + esc(t.summary) + '</p>' : "")
+          + (t.note ? '<span class="tnote">产出：' + esc(t.note) + '</span>' : "")
+          + '</div></div>';
+      });
+      html += '</div></details>';
+    });
+    wrap.innerHTML = html;
+    var all = [];
+    DATA.stages.forEach(function (s) { all = all.concat(s.tasks); });
+    var c = all.filter(function (t) { return done[t.id]; }).length;
+    document.getElementById("pct").textContent = all.length ? Math.round(c / all.length * 100) : 0;
+    document.getElementById("pdone").textContent = c;
+    document.getElementById("pbar").style.width = (all.length ? Math.round(c / all.length * 100) : 0) + "%";
+  }
+
+  function toggle(id) {
+    done[id] = !done[id];
+    if (!done[id]) delete done[id];
+    save();
+    render();
+  }
+
+  function resetAll() {
+    if (!confirm("确定清空所有勾选记录吗？此操作不可恢复。")) return;
+    done = {};
+    save();
+    render();
+  }
+
+  function setFont(scale, btn) {
+    document.getElementById("app").style.zoom = scale;
+    document.querySelectorAll(".fs button").forEach(function (b) { b.classList.remove("on"); });
+    if (btn) btn.classList.add("on");
+    try { localStorage.setItem("study_fs", String(scale)); } catch (e) {}
+  }
+
+  render();
+  (function () {
+    try {
+      var s = localStorage.getItem("study_fs");
+      if (s) { var b = document.querySelector('.fs button[data-fs="' + s + '"]'); setFont(parseFloat(s), b); }
+    } catch (e) {}
+  })();
+</script>
+</body>
+</html>
