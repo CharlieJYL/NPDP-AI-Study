@@ -261,11 +261,14 @@ function serveStatic(req, res, pathname) {
     res.writeHead(200, { "Content-Type": MIME[path.extname(rf)] || "application/octet-stream" });
     return res.end(fs.readFileSync(rf));
   }
-  // 3) SPA 兜底到 index.html：优先 public/，其次仓库根目录
-  const idxPub = path.join(PUB, "index.html");
-  const idxRoot = path.join(ROOT, "index.html");
-  const idx = fs.existsSync(idxPub) ? idxPub : (fs.existsSync(idxRoot) ? idxRoot : null);
-  if (idx) { res.writeHead(200, { "Content-Type": MIME[".html"] }); return res.end(fs.readFileSync(idx)); }
+  // 3) SPA 兜底到 index.html：仅限无后缀路径（如 /quiz-3）；
+  //    带后缀的文件（如 study.html）不存在时直接 404，避免误把主看板泄露给公开链接
+  if (!path.extname(safe)) {
+    const idxPub = path.join(PUB, "index.html");
+    const idxRoot = path.join(ROOT, "index.html");
+    const idx = fs.existsSync(idxPub) ? idxPub : (fs.existsSync(idxRoot) ? idxRoot : null);
+    if (idx) { res.writeHead(200, { "Content-Type": MIME[".html"] }); return res.end(fs.readFileSync(idx)); }
+  }
   return send(res, 404, { ok: false, msg: "not found" });
 }
 
