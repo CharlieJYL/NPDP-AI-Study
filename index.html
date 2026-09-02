@@ -249,6 +249,14 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
   .mqstatus{margin-top:10px;}
   .quizbox{margin-top:4px;}
   .mqscore{font-size:13.5px;}
+  /* 小测顶部标题栏（含收起按钮） */
+  .mqbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-12px -12px 10px;padding:9px 12px;background:rgba(107,140,174,.10);border-bottom:1px solid var(--line);border-radius:10px 10px 0 0;font-size:13px;font-weight:600;color:var(--blue2);flex-wrap:wrap;}
+  /* 吸底操作条：滚到哪都能提交，不用翻到最底下 */
+  .mqfoot{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px -12px -12px;padding:10px 12px;background:#fbfcfe;border-top:1px solid var(--line);border-radius:0 0 10px 10px;box-shadow:0 -4px 14px rgba(31,56,100,.10);}
+  .mqprog{font-size:13px;color:#55617a;margin-right:auto;white-space:nowrap;}
+  .mqprog.ok{color:var(--green);font-weight:700;}
+  body.dark .mqfoot{background:var(--card);}
+  body.dark .mqbar{background:rgba(107,140,174,.16);}
   .foldbar{display:flex;justify-content:center;margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);}
   .foldbar.stage-fold{margin-top:18px;padding-top:12px;}
   .savednote{margin-top:8px;font-size:12.5px;color:var(--green);}
@@ -517,7 +525,7 @@ body.course-tealgold{--blue:#9485C2;--blue2:#7C6BA8;--bg:#F3F1F8;--line:#E3DDEF;
   .mpDone{flex:none;font-size:11px;color:var(--green);background:#eafaf0;border:1px solid #cdeedd;border-radius:9px;padding:2px 8px;margin-left:8px;font-weight:500;}
   .modPageScroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
   .modPageInner{max-width:800px;margin:0 auto;padding:16px 14px 90px;}
-  .modPage .mod{display:block !important;border:none;box-shadow:none;background:transparent;}
+  .modPage .mod{display:block !important;border:none;box-shadow:none;background:transparent;overflow:visible;}
   .modPage .mod .head{display:none;}                 /* 页面顶栏已含标题，卡头不重复 */
   .modPage .mod .body{display:block !important;}      /* 页面态始终展开 */
   .modPage .mod .foldbar{display:none;}               /* 返回走顶栏按钮 */
@@ -976,7 +984,9 @@ function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const
 function renderModuleQuiz(id, review){
   const qs = MODULE_QUIZ[id] || [];
   const saved = mq[id];
-  let html = '<div class="mq">';
+  let html = '<div class="mq" oninput="mqProgress('+id+')" onchange="mqProgress('+id+')">'
+    + '<div class="mqbar"><span>本小节测验 · 共 '+qs.length+' 题</span>'
+    + '<button class="btn ghost sm" onclick="collapseModuleQuiz('+id+')">收起测验 ▲</button></div>';
   qs.forEach((q,qi)=>{
     html += '<div class="qc" data-qi="'+qi+'" data-type="'+q.type+'">';
     html += '<div class="qh">Q'+(qi+1)+'. <span class="qtype '+q.type+'">'+typeLabel(q.type)+'</span> '+esc(q.q)+'</div><div class="opts">';
@@ -1012,12 +1022,42 @@ function renderModuleQuiz(id, review){
     }
     html += '</div><div class="qres" id="mqr_'+id+'_'+qi+'"></div></div>';
   });
-  html += '<div class="btns"><button class="btn blue" onclick="gradeModuleQuiz('+id+')">提交小测</button>';
+  html += '<div class="mqfoot"><span class="mqprog" id="mqprog_'+id+'">已答 0 / '+qs.length+'</span>';
+  html += '<button class="btn blue" onclick="gradeModuleQuiz('+id+')">提交小测</button>';
   html += ' <button class="btn ghost sm" onclick="redoModuleQuiz('+id+')">重做本题</button>';
-  html += ' <span class="mqscore" id="mqs_'+id+'"></span></div></div>';
+  html += ' <span class="mqscore" id="mqs_'+id+'"></span>';
+  html += ' <button class="btn ghost sm" style="margin-left:auto" onclick="collapseModuleQuiz('+id+')">收起测验 ▲</button></div></div>';
   return html;
 }
-function startModuleQuiz(id){ const b=document.getElementById("quizbox"+id); b.innerHTML=renderModuleQuiz(id,false); b.style.display="block"; }
+// 统计已作答题数（供进度条与"未答完提交确认"共用）
+function answeredCount(id){
+  const qs = MODULE_QUIZ[id] || [];
+  const box = document.getElementById("quizbox"+id);
+  if(!box) return {n:0,total:qs.length};
+  const cards = Array.from(box.querySelectorAll(".qc"));
+  let n = 0;
+  qs.forEach((q,qi)=>{
+    const c = cards[qi]; if(!c) return;
+    if(q.type==="single"||q.type==="multi"){ if(c.querySelector("input:checked")) n++; }
+    else if(q.type==="fill"){ const ins=Array.from(c.querySelectorAll("input.blank")); if(ins.length && ins.every(i=>String(i.value).trim())) n++; }
+    else if(q.type==="match"){ const sels=Array.from(c.querySelectorAll("select.msel")); if(sels.length && sels.every(s=>s.value)) n++; }
+  });
+  return {n:n,total:qs.length};
+}
+function mqProgress(id){
+  const el = document.getElementById("mqprog_"+id);
+  if(!el) return;
+  const p = answeredCount(id);
+  if(p.total>0 && p.n>=p.total){ el.textContent = "已答 "+p.n+" / "+p.total+" ✓ 可以提交了"; el.classList.add("ok"); }
+  else { el.textContent = "已答 "+p.n+" / "+p.total; el.classList.remove("ok"); }
+}
+function collapseModuleQuiz(id){
+  const b = document.getElementById("quizbox"+id);
+  if(b) b.style.display = "none";
+  const a = document.getElementById("mqanchor_"+id);
+  try{ (a||b).scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){}
+}
+function startModuleQuiz(id){ const b=document.getElementById("quizbox"+id); if(!b) return; b.innerHTML=renderModuleQuiz(id,false); b.style.display="block"; mqProgress(id); }
 // 复习模式：以 review=true 渲染（自动回显用户作答与选项）→ 重新走 gradeModuleQuiz，生成内联反馈
 function reviewModuleQuiz(id){
   const b=document.getElementById("quizbox"+id);
@@ -1027,6 +1067,7 @@ function reviewModuleQuiz(id){
     b.innerHTML=renderModuleQuiz(id,true);
     b.style.display="block";
     gradeModuleQuiz(id);
+    mqProgress(id);
     // 复盘展开后，把视口滚到小测顶部，避免内容在屏幕外、用户以为"无反应"
     try{ b.scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){}
   }catch(e){
@@ -1036,13 +1077,18 @@ function reviewModuleQuiz(id){
     window.__inModuleReview = false;
   }
 }
-function redoModuleQuiz(id){ const b=document.getElementById("quizbox"+id); b.innerHTML=renderModuleQuiz(id,false); b.style.display="block"; }
+function redoModuleQuiz(id){ const b=document.getElementById("quizbox"+id); if(!b) return; b.innerHTML=renderModuleQuiz(id,false); b.style.display="block"; mqProgress(id); }
 
 function gradeModuleQuiz(id){
   const qs = MODULE_QUIZ[id] || [];
   const box = document.getElementById("quizbox"+id);
   if(!box) return;
   const cards = Array.from(box.querySelectorAll(".qc"));
+  // 还有题没答就点提交：先确认，防误触（复盘模式跳过）
+  if(window.__inModuleReview !== true){
+    const p = answeredCount(id);
+    if(p.n < p.total && !confirm("还有 "+(p.total-p.n)+" 题没作答，确定现在提交吗？\n（点「取消」可回去继续作答）")) return;
+  }
   const savedAns = [];
   let correctCount = 0;
   qs.forEach((q,qi)=>{
@@ -1126,7 +1172,22 @@ function gradeModuleQuiz(id){
       renderStages(current);
       renderMilestones();
       openMod(id);
-      if(scoreEl) scoreEl.innerHTML = '<span class="ok">本小节通过（'+correctCount+'/'+total+'），下一节已解锁</span>';
+      // 重挂后恢复展开：回显作答 + 每题解析，不再“提交完就整页折叠”
+      const nb = document.getElementById("quizbox"+id);
+      if(nb){
+        window.__inModuleReview = true;
+        try{
+          nb.innerHTML = renderModuleQuiz(id,true);
+          nb.style.display = "block";
+          gradeModuleQuiz(id);
+          mqProgress(id);
+        }finally{ window.__inModuleReview = false; }
+        const se = document.getElementById("mqs_"+id);
+        if(se) se.innerHTML = '<span class="ok">本小节通过（'+correctCount+'/'+total+'）· 下一节已解锁 · 解析已展开在下方，看完可点「收起测验 ▲」</span>';
+        try{ nb.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){}
+      } else if(scoreEl){
+        scoreEl.innerHTML = '<span class="ok">本小节通过（'+correctCount+'/'+total+'），下一节已解锁</span>';
+      }
     } else {
       // 复盘已全对：只显示复盘完成提示，不再触发 renderStages（否则会清掉刚展开的 quizbox，"温习/重做"看起来像无反应）
       if(scoreEl) scoreEl.innerHTML = '<span class="ok">复盘完成 · '+correctCount+'/'+total+' 全对，解析见下方每题</span>';
@@ -1263,11 +1324,11 @@ function renderModule(task, secNum){
   sec += '<div class="sec note"><span class="lab"> 学习笔记</span><textarea class="noter" id="note'+id+'" placeholder="学完随手记一句，复习时有用" onblur="saveNote('+id+')">'+esc(NOTE[id]||"")+'</textarea></div>';
   let quizArea;
   if(isd){
-    quizArea = '<div class="mqstatus ok">已通过本小节测验'
+    quizArea = '<div class="mqstatus ok" id="mqanchor_'+id+'">已通过本小节测验'
       + ' · <button class="btn ghost sm" onclick="reviewModuleQuiz('+id+')">温习 / 重做</button></div>'
       + '<div class="quizbox" id="quizbox'+id+'" style="display:none"></div>';
   } else {
-    quizArea = '<div class="mqstatus"><button class="btn ok" onclick="startModuleQuiz('+id+')">开始本小节测验（全对才解锁下一节）</button></div>'
+    quizArea = '<div class="mqstatus" id="mqanchor_'+id+'"><button class="btn ok" onclick="startModuleQuiz('+id+')">开始本小节测验（全对才解锁下一节）</button></div>'
       + '<div class="quizbox" id="quizbox'+id+'" style="display:none"></div>';
   }
   // 首页小节卡 body 永远不展开（详细内容走独立页）；display:none 由 CSS 兜底
